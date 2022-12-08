@@ -1,0 +1,83 @@
+2-4,6-8
+2-3,4-5
+5-7,7-9
+2-8,3-7
+6-6,4-6
+2-6,4-8
+
+Before: 0
+(2, 4) and (2, 3) overlap
+(2, 4) and (4, 5) overlap
+After: 1
+Before: 1
+(6, 8) and (5, 7) overlap
+(6, 8) and (7, 9) overlap
+After: 2
+Before: 2
+(2, 4) and (2, 8) overlap
+(2, 4) and (3, 7) overlap
+(6, 8) and (2, 8) overlap
+(6, 8) and (3, 7) overlap
+After: 3
+Before: 3
+(2, 4) and (4, 6) overlap
+(6, 8) and (6, 6) overlap
+(6, 8) and (4, 6) overlap
+After: 4
+Before: 4
+(2, 4) and (2, 6) overlap
+(2, 4) and (4, 8) overlap
+(6, 8) and (2, 6) overlap
+(6, 8) and (4, 8) overlap
+After: 5
+Before: 5
+(4, 5) and (5, 7) overlap
+After: 6
+Before: 6
+(2, 3) and (2, 8) overlap
+(2, 3) and (3, 7) overlap
+(4, 5) and (2, 8) overlap
+(4, 5) and (3, 7) overlap
+After: 7
+Before: 7
+(4, 5) and (4, 6) overlap
+After: 8
+Before: 8
+(2, 3) and (2, 6) overlap
+(4, 5) and (2, 6) overlap
+(4, 5) and (4, 8) overlap
+After: 9
+Before: 9
+(5, 7) and (2, 8) overlap
+(5, 7) and (3, 7) overlap
+(7, 9) and (2, 8) overlap
+(7, 9) and (3, 7) overlap
+After: 10
+Before: 10
+(5, 7) and (6, 6) overlap
+(5, 7) and (4, 6) overlap
+After: 11
+Before: 11
+(5, 7) and (2, 6) overlap
+(5, 7) and (4, 8) overlap
+(7, 9) and (4, 8) overlap
+After: 12
+Before: 12
+(2, 8) and (6, 6) overlap
+(2, 8) and (4, 6) overlap
+(3, 7) and (6, 6) overlap
+(3, 7) and (4, 6) overlap
+After: 13
+Before: 13
+(2, 8) and (2, 6) overlap
+(2, 8) and (4, 8) overlap
+(3, 7) and (2, 6) overlap
+(3, 7) and (4, 8) overlap
+After: 14
+Before: 14
+(6, 6) and (2, 6) overlap
+(6, 6) and (4, 8) overlap
+(4, 6) and (2, 6) overlap
+(4, 6) and (4, 8) overlap
+After: 15
+Part 2 - The number of pairs that overlap at all is: 15
