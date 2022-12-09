@@ -33,13 +33,13 @@ fn process_lines(lines: &Vec<String>) -> i32 {
         if numbers[1] - numbers[0] > numbers[3] - numbers[2] {
             // the first range is bigger, check if it contains the second range
             if numbers[0] <= numbers[2] && numbers[1] >= numbers[3] {
-                println!("({},{}) fully contains ({},{})", numbers[0], numbers[1], numbers[2], numbers[3]);
+                //println!("({},{}) fully contains ({},{})", numbers[0], numbers[1], numbers[2], numbers[3]);
                 fully_contained += 1;
             }
         }else {
             // the second range is bigger.
             if numbers[2] <= numbers[0] && numbers[3] >= numbers[1] {
-                println!("({},{}) fully contains ({},{})", numbers[2], numbers[3], numbers[0], numbers[1]);
+                //println!("({},{}) fully contains ({},{})", numbers[2], numbers[3], numbers[0], numbers[1]);
                 fully_contained += 1;
             }
         }
@@ -56,7 +56,7 @@ fn ranges_overlap(a: i32, b: i32, c: i32, d: i32) -> i32 {
         (a <= d && d <= b) ||
         (c <= a && a <= d) ||
         (c <= b && b <= d) {
-            println!("({}, {}) and ({}, {}) overlap", a, b, c, d);
+            //println!("({}, {}) and ({}, {}) overlap", a, b, c, d);
             overlap += 1;
         }
     overlap
