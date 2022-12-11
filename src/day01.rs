@@ -61,9 +61,30 @@ fn process_lines2(lines: &Vec<String>) -> i32 {
             accumulator += i32::from_str(each_line.trim()).unwrap();
         }
     }
+    // add the result from the last elf
+    if accumulator > 0 {
+        result.push(accumulator);
+    }
     result.sort();
     // return the sum of the three highst sums in the list
     result[result.len() - 3] + result[result.len() - 2] + result[result.len() - 1]
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_process_lines() {
+        let result = read_lines("day01_input_short.txt");
+        assert_eq!(process_lines(&result), 24000);
+    }
+
+    #[test]
+    fn test_process_lines2() {
+        let result = read_lines("day01_input_short.txt");
+        assert_eq!(process_lines2(&result), 45000);
+    }
 }
 
 pub fn main() {

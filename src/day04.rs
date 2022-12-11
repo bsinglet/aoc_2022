@@ -69,7 +69,6 @@ fn process_lines2(lines: &Vec<String>) -> i32 {
      See Part 2 of https://adventofcode.com/2022/day/4
      */
     let mut overlaps: i32 = 0;
-    let mut pairs: Vec<Vec<i32>> = Vec::new();
     for each_line in lines {
         let commas: String = each_line.replace("-", ",");
         let my_strings: Vec<&str> = commas.split(",").collect();
@@ -83,6 +82,7 @@ fn process_lines2(lines: &Vec<String>) -> i32 {
     /*
     // Defunct version. This part of the function solved a much harder 
     // problem, checking each pair if it overlaps with any other pairs.
+    let mut pairs: Vec<Vec<i32>> = Vec::new();
     for (index, each_pair) in pairs.iter().enumerate() {
         let (range_1_start, range_1_end, range_2_start, range_2_end) 
             = (pairs[index][0], pairs[index][1], pairs[index][2], pairs[index][3]);
@@ -97,6 +97,23 @@ fn process_lines2(lines: &Vec<String>) -> i32 {
     }*/
 
     overlaps
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_process_lines() {
+        let result = read_lines("day04_input_short.txt");
+        assert_eq!(process_lines(&result), 2);
+    }
+
+    #[test]
+    fn test_process_lines2() {
+        let result = read_lines("day04_input_short.txt");
+        assert_eq!(process_lines2(&result), 4);
+    }
 }
 
 pub fn main() {

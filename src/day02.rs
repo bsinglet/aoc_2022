@@ -106,6 +106,23 @@ fn process_lines2(lines: &Vec<(char, char)>) -> i32 {
     score
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_process_lines() {
+        let result = read_lines("day02_input_short.txt");
+        assert_eq!(process_lines(&result), 15);
+    }
+
+    #[test]
+    fn test_process_lines2() {
+        let result = read_lines("day02_input_short.txt");
+        assert_eq!(process_lines2(&result), 12);
+    }
+}
+
 pub fn main() {
     let result = read_lines("day02_input.txt");
     println!("Day 2:");

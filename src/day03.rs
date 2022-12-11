@@ -78,6 +78,23 @@ fn process_lines2(lines: &Vec<String>) -> i32 {
     priority_sum
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_process_lines() {
+        let result = read_lines("day03_input_short.txt");
+        assert_eq!(process_lines(&result), 157);
+    }
+
+    #[test]
+    fn test_process_lines2() {
+        let result = read_lines("day03_input_short.txt");
+        assert_eq!(process_lines2(&result), 70);
+    }
+}
+
 pub fn main() {
     let result = read_lines("day03_input.txt");
     println!("Day 3:");
