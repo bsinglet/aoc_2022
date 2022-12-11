@@ -1,5 +1,6 @@
 use std::fs;
 use std::str::FromStr;
+use regex::Regex;
 
 fn read_lines(filename: &str) -> (Vec<String>, Vec<String>) {
     /*
@@ -32,9 +33,9 @@ fn process_lines(lines: &Vec<String>, moves: &Vec<String>) -> String {
      
      See Part 1 of https://adventofcode.com/2022/day/5
      */
-    let return_value: String = ' '.to_string();
+    let mut return_value: Vec<char> = Vec::new();
     let mut stacks: Vec<Vec<char>> = Vec::new();
-    for index in 0..(lines[0].len() / 3) {
+    for _index in 0..(lines[0].len() / 3) {
         stacks.push(Vec::new());
     } 
     // populate the initial states of the stacks
@@ -46,18 +47,65 @@ fn process_lines(lines: &Vec<String>, moves: &Vec<String>) -> String {
             }
         }
     }
+    // reverse the stacks
+    for each_stack in 0..stacks.len() {
+        stacks[each_stack].reverse();
+    }
     println!("Stack 0: {}", stacks[0].iter().collect::<String>());
     println!("Stack 1: {}", stacks[1].iter().collect::<String>());
     println!("Stack 2: {}", stacks[2].iter().collect::<String>());
     // parse the move set
+    let re = Regex::new(r"^\s*move\s+(\d+)\s+from\s+(\d+)\s+to\s+(\d+)\s*$").unwrap();
+    let mut move_tuples: Vec<(i32, i32, i32)> = Vec::new();
     for each_move in moves {
+        let move_captures = re.captures(each_move).unwrap();
+        move_tuples.push((i32::from_str(move_captures.get(1).unwrap().as_str()).unwrap(),
+        i32::from_str(move_captures.get(2).unwrap().as_str()).unwrap()-1,
+        i32::from_str(move_captures.get(3).unwrap().as_str()).unwrap()-1));
         continue;
     }
     // carry out the moves
+    for each_move in move_tuples {
+        let mut temp_stack: Vec<char> = Vec::new();
+        for _index in 1..each_move.0 {
+            let value = stacks[each_move.1 as usize].pop().unwrap();
+            println!("Adding value {}", value);
+            temp_stack.push(value);
+        }
+        for each_crate in 1..temp_stack.len() {
+            stacks[each_move.2 as usize].push(temp_stack[each_crate-1]);
+            println!("{}", each_crate);
+        }
+    }
+
+    println!("Stack 0: {}", stacks[0].iter().collect::<String>());
+    println!("Stack 1: {}", stacks[1].iter().collect::<String>());
+    println!("Stack 2: {}", stacks[2].iter().collect::<String>());
+
+    for each_stack in 0..stacks.len()-1 {
+        stacks[each_stack].reverse();
+    }
 
     // calculate the final return value
+    for each_stack in 0..stacks.len()-1 {
+        if stacks[each_stack].len() > 0 {
+            return_value.push(stacks[each_stack][0]);
+        }
+    }
 
-    return_value
+    return_value.iter().collect::<String>()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_process_lines() {
+        let (lines, moves) = read_lines("day05_input_short.txt");
+        assert_eq!(process_lines(&lines, &moves),
+    "NDP".to_string());
+    }
 }
 
 pub fn main() {
