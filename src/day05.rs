@@ -41,6 +41,7 @@ fn process_lines(lines: &Vec<String>, moves: &Vec<String>) -> String {
     // populate the initial states of the stacks
     for each_line in &lines[0..lines.len()-1] {
         for each_stack in 0..stacks.len() {
+            println!("Trying to add {} to stack {}", each_line, each_stack);
             let this_crate: char = each_line.chars().nth((each_stack*4)+1).unwrap();
             if this_crate != ' ' {
                 stacks[each_stack].push(this_crate);
@@ -51,9 +52,9 @@ fn process_lines(lines: &Vec<String>, moves: &Vec<String>) -> String {
     for each_stack in 0..stacks.len() {
         stacks[each_stack].reverse();
     }
-    println!("Stack 0: {}", stacks[0].iter().collect::<String>());
-    println!("Stack 1: {}", stacks[1].iter().collect::<String>());
-    println!("Stack 2: {}", stacks[2].iter().collect::<String>());
+    for each_stack in 0..stacks.len()-1 {
+        println!("Stack {}: {}", each_stack, stacks[each_stack].iter().collect::<String>());
+    }
     // parse the move set
     let re = Regex::new(r"^\s*move\s+(\d+)\s+from\s+(\d+)\s+to\s+(\d+)\s*$").unwrap();
     let mut move_tuples: Vec<(i32, i32, i32)> = Vec::new();
@@ -76,11 +77,13 @@ fn process_lines(lines: &Vec<String>, moves: &Vec<String>) -> String {
             stacks[each_move.2 as usize].push(temp_stack[each_crate-1]);
             println!("{}", each_crate);
         }
+        //stacks[each_move.1 as usize] = stacks[each_move.1 as usize]
+        //    [0..stacks[each_move.1 as usize].len() -each_move.0 as usize].to_vec();
     }
 
-    println!("Stack 0: {}", stacks[0].iter().collect::<String>());
-    println!("Stack 1: {}", stacks[1].iter().collect::<String>());
-    println!("Stack 2: {}", stacks[2].iter().collect::<String>());
+    for each_stack in 0..stacks.len()-1 {
+        println!("Stack {}: {}", each_stack, stacks[each_stack].iter().collect::<String>());
+    }
 
     for each_stack in 0..stacks.len()-1 {
         stacks[each_stack].reverse();
@@ -101,15 +104,22 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_process_lines() {
+    fn test_process_lines_short() {
         let (lines, moves) = read_lines("day05_input_short.txt");
         assert_eq!(process_lines(&lines, &moves),
     "NDP".to_string());
     }
+
+    #[test]
+    fn test_process_lines_full() {
+        let (lines, moves) = read_lines("day05_input.txt");
+        assert_eq!(process_lines(&lines, &moves),
+    "ZLFGQFTQP".to_string());
+    }
 }
 
 pub fn main() {
-    let (lines, moves) = read_lines("day05_input.txt");
+    let (lines, moves) = read_lines("day05_input_short.txt");
     println!("Day 5:");
     println!("Part 1 - The crates that end up on top of each stack are: {}", process_lines(&lines, &moves));
     println!("");
