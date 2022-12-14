@@ -138,16 +138,15 @@ fn process_lines2(lines: &Vec<String>, moves: &Vec<String>) -> String {
     }
     // carry out the moves
     for each_move in move_tuples {
-        let mut temp_stack: Vec<char> = Vec::new();
-        for _index in 0..each_move.0 {
-            let value = stacks[each_move.1 as usize].pop().unwrap();
-            //println!("Adding value {}", value);
-            temp_stack.push(value);
-        }
+        // get the crates to be moved, without changing their order
+        let temp_stack: Vec<char> = stacks[each_move.1 as usize][stacks[each_move.1 as usize].len()-each_move.0 as usize..].to_vec();
+        // add to destination stack
         for each_crate in 0..temp_stack.len() {
             stacks[each_move.2 as usize].push(temp_stack[each_crate]);
             //println!("{}", each_crate);
         }
+        // remove from origin stack
+        stacks[each_move.1 as usize] = stacks[each_move.1 as usize][..stacks[each_move.1 as usize].len()-each_move.0 as usize].to_vec();
     }
 
     // print the stacks again
