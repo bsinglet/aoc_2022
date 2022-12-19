@@ -1,6 +1,14 @@
-use std::fs;
+use std::fs::{self, File};
 use regex::Regex;
-use std::collections::HashMap;
+
+#[derive(Debug)]
+pub struct FileOrDirectory {
+    name: &str,
+    parent: &str,
+    depth: i32,
+    mut size: i32,
+    mut children: Vec<String>,
+}
 
 fn read_lines(filename: &str) -> Vec<String> {
     /*
@@ -16,13 +24,13 @@ fn read_lines(filename: &str) -> Vec<String> {
     lines
 }
 
-fn parse_input(lines: &Vec<String>) -> (Vec<HashMap>, Vec<HashMap>) {
+fn parse_input(lines: &Vec<String>) -> (Vec<FileOrDirectory>, Vec<FileOrDirectory>) {
     let cd_command = Regex::new(r"^\$\s+cd\s+(\w+)").unwrap();
     let ls_command = Regex::new(r"^\$\s+ls").unwrap();
     let directory_line = Regex::new(r"^dir\s+(\d+)").unwrap();
     let file_line = Regex::new(r"^(\d+)\s+(.+)").unwrap();
-    let directories: Vec<HashMap> = Vec::new();
-    let files: Vec<HashMap> = Vec::new();
+    let directories: Vec<FileOrDirectory> = Vec::new();
+    let files: Vec<FileOrDirectory> = Vec::new();
     let mut current_directory = "/";
     let mut current_depth = 0;
     let mut index: usize = 0;
@@ -31,20 +39,22 @@ fn parse_input(lines: &Vec<String>) -> (Vec<HashMap>, Vec<HashMap>) {
             // the next unknown many lines are files or directories inside of current_directory
             loop {
                 if directory_line.search(lines[index]) {
-                    let directory: HashMap<&str, &str> = HashMap::from([
-                        ("parent", current_directory),
-                        ("depth", current_depth),
-                        ("size", "0"),
-                        ("name", directory_line.captures(&lines[index]).get(1)),
-                        ]);
+                    let directory = FileOrDirectory{
+                        parent: current_directory,
+                        depth: current_depth,
+                        size: 0,
+                        name: directory_line.captures(&lines[index]).get(1),
+                        children: Vec::new(),
+                    };
                     directories.push(directory);
                 }else if file_line.search(lines[index]) {
-                    let file: HashMap<&str, &str> = HashMap::from([
-                        ("parent", current_directory),
-                        ("depth", current_depth),
-                        ("size", file_line.captures(&lines[index]).get(1)),
-                        ("name", file_line.captures(&lines[index]).get(2)),
-                    ]);
+                    let file = FileOrDirectory{
+                        parent: current_directory,
+                        depth: current_depth,
+                        size: file_line.captures(&lines[index]).get(1),
+                        name: file_line.captures(&lines[index]).get(2),
+                        children: Vec::new(),
+                    };
                 }
             }
         }else if cd_command.search(lines[index]) {
@@ -82,13 +92,13 @@ fn process_lines(lines: &Vec<String>) -> i32 {
 
     // calculate the sizes of all of the subdirectories, starting from the 
     // lowest levels up
-    for each_file in files.sort_by_key(|x| x["depth"]).reverse() {
+    for each_file in files.sort_by_key(|x| x[depth]).reverse() {
         // apply file sizes to directory_sizes
     }
     // add the sizes of child directories to parent directories
-    for each_directory in directories.sort_by_key(|x| x["depth"]).reverse() {
+    for each_directory in directories.sort_by_key(|x| x[depth]).reverse() {
         // stop at root level
-        if each_directory["depth"] = 0 {
+        if each_directory[depth] = 0 {
             break;
         }
         // add this directory's size to its parent directory
@@ -96,9 +106,9 @@ fn process_lines(lines: &Vec<String>) -> i32 {
 
     // sum the size of the directories that are 100kB or less
     let mut total_of_small_directories: i32 = 0;
-    for each_directory in directories.sort_by_key(|&x| x["size"]).reverse() {
-        if each_directory["size"] <= 100000 {
-            total_of_small_directories += each_directory["size"];
+    for each_directory in directories.sort_by_key(|&x| x[size]).reverse() {
+        if each_directory[size] <= 100000 {
+            total_of_small_directories += each_directory[size];
         }
     }
     total_of_small_directories
