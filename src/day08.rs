@@ -102,10 +102,11 @@ fn check_to_north(tree_grid: &Vec<Vec<(i32, i32)>>, x_index: usize, y_index: usi
     let tree_height: i32 = tree_grid[y_index][x_index].0;
     let mut sub_score: i32 = 0;
     for inner_y_index in 1..y_index+1 {
-        println!("Comparing ({}, {}) with ({}, {})", x_index, y_index, x_index, y_index - inner_y_index);
+        //println!("Comparing ({}, {}) with ({}, {})", x_index, y_index, x_index, y_index - inner_y_index);
         if tree_grid[y_index - inner_y_index][x_index].0 < tree_height {
             sub_score += 1;
         }else {
+            sub_score += 1;
             break;
         }
     }
@@ -120,6 +121,7 @@ fn check_to_south(tree_grid: &Vec<Vec<(i32, i32)>>, x_index: usize, y_index: usi
         if tree_grid[inner_y_index][x_index].0 < tree_height {
             sub_score += 1;
         }else {
+            sub_score += 1;
             break;
         }
     }
@@ -130,10 +132,12 @@ fn check_to_east(tree_grid: &Vec<Vec<(i32, i32)>>, x_index: usize, y_index: usiz
     // check trees to the East
     let tree_height: i32 = tree_grid[y_index][x_index].0;
     let mut sub_score: i32 = 0;
-    for inner_x_index in 1..x_index+1 {
-        if tree_grid[y_index][x_index - inner_x_index].0 < tree_height {
+    for inner_x_index in x_index+1..tree_grid.len() {
+        println!("Comparing ({}, {}) with ({}, {})", x_index, y_index, inner_x_index, y_index);
+        if tree_grid[y_index][inner_x_index].0 < tree_height {
             sub_score += 1;
         }else {
+            sub_score += 1;
             break;
         }
     }
@@ -144,11 +148,12 @@ fn check_to_west(tree_grid: &Vec<Vec<(i32, i32)>>, x_index: usize, y_index: usiz
     // check trees to the West
     let tree_height: i32 = tree_grid[y_index][x_index].0;
     let mut sub_score: i32 = 0;
-    for inner_x_index in 1..tree_grid.len()-1 {
-        println!("Comparing ({}, {}) with ({}, {})", x_index, y_index, x_index - inner_x_index, y_index);
+    for inner_x_index in 1..x_index+1 {
+        //println!("Comparing ({}, {}) with ({}, {})", x_index, y_index, x_index - inner_x_index, y_index);
         if tree_grid[y_index][x_index - inner_x_index].0 < tree_height {
             sub_score += 1;
         }else {
+            sub_score += 1;
             break;
         }
     }
@@ -179,8 +184,8 @@ fn process_lines2(lines: &Vec<String>) -> i32 {
     }
 
     // visit each tree in the grid
-    for x_index in 1..tree_grid.len() {
-        for y_index in 1..tree_grid.len() {
+    for x_index in 1..tree_grid.len()-1 {
+        for y_index in 1..tree_grid.len()-1 {
             let mut tree_scores: (i32, i32, i32, i32) = (0, 0, 0, 0);
 
             tree_scores.1 += check_to_north(&tree_grid, x_index, y_index);
@@ -189,6 +194,8 @@ fn process_lines2(lines: &Vec<String>) -> i32 {
             tree_scores.2 += check_to_west(&tree_grid, x_index, y_index);
             tree_grid[y_index][x_index].1 = tree_scores.0 * tree_scores.1 * tree_scores.2 * tree_scores.3;
 
+            println!("({}, {}) has scenic score {}*{}*{}*{} = {}.", x_index, y_index, 
+                tree_scores.1, tree_scores.0, tree_scores.3, tree_scores.2, tree_grid[y_index][x_index].1);
             if tree_grid[y_index][x_index].1 > heighest_score {
                 heighest_score = tree_grid[y_index][x_index].1;
             }
@@ -259,6 +266,72 @@ mod tests {
     }
 
     #[test]
+    fn test_check_to_north_03() {
+        let mut tree_grid: Vec<Vec<(i32, i32)>> = Vec::new();
+        tree_grid.push(vec![(3, 0), (0, 0), (3, 0), (7, 0), (3, 0)]);
+        tree_grid.push(vec![(2, 0), (5, 0), (5, 0), (1, 0), (2, 0)]);
+        tree_grid.push(vec![(6, 0), (5, 0), (3, 0), (3, 0), (2, 0)]);
+        tree_grid.push(vec![(3, 0), (3, 0), (5, 0), (4, 0), (9, 0)]);
+        tree_grid.push(vec![(3, 0), (5, 0), (3, 0), (9, 0), (0, 0)]);
+        assert_eq!(check_to_north(&tree_grid, 2, 3), 2);
+    }
+
+    #[test]
+    fn test_check_to_east_01() {
+        let mut tree_grid: Vec<Vec<(i32, i32)>> = Vec::new();
+        tree_grid.push(vec![(3, 0), (0, 0), (3, 0), (7, 0), (3, 0)]);
+        tree_grid.push(vec![(2, 0), (5, 0), (5, 0), (1, 0), (2, 0)]);
+        tree_grid.push(vec![(6, 0), (5, 0), (3, 0), (3, 0), (2, 0)]);
+        tree_grid.push(vec![(3, 0), (3, 0), (5, 0), (4, 0), (9, 0)]);
+        tree_grid.push(vec![(3, 0), (5, 0), (3, 0), (9, 0), (0, 0)]);
+        assert_eq!(check_to_east(&tree_grid, 1, 2), 3);
+    }
+
+    #[test]
+    fn test_check_to_east_02() {
+        let mut tree_grid: Vec<Vec<(i32, i32)>> = Vec::new();
+        tree_grid.push(vec![(3, 0), (0, 0), (3, 0), (7, 0), (3, 0)]);
+        tree_grid.push(vec![(2, 0), (5, 0), (5, 0), (1, 0), (2, 0)]);
+        tree_grid.push(vec![(6, 0), (5, 0), (3, 0), (3, 0), (2, 0)]);
+        tree_grid.push(vec![(3, 0), (3, 0), (5, 0), (4, 0), (9, 0)]);
+        tree_grid.push(vec![(3, 0), (5, 0), (3, 0), (9, 0), (0, 0)]);
+        assert_eq!(check_to_east(&tree_grid, 3, 1), 1);
+    }
+
+    #[test]
+    fn test_check_to_east_03() {
+        let mut tree_grid: Vec<Vec<(i32, i32)>> = Vec::new();
+        tree_grid.push(vec![(3, 0), (0, 0), (3, 0), (7, 0), (3, 0)]);
+        tree_grid.push(vec![(2, 0), (5, 0), (5, 0), (1, 0), (2, 0)]);
+        tree_grid.push(vec![(6, 0), (5, 0), (3, 0), (3, 0), (2, 0)]);
+        tree_grid.push(vec![(3, 0), (3, 0), (5, 0), (4, 0), (9, 0)]);
+        tree_grid.push(vec![(3, 0), (5, 0), (3, 0), (9, 0), (0, 0)]);
+        assert_eq!(check_to_east(&tree_grid, 3, 2), 1);
+    }
+
+    #[test]
+    fn test_check_to_east_04() {
+        let mut tree_grid: Vec<Vec<(i32, i32)>> = Vec::new();
+        tree_grid.push(vec![(3, 0), (0, 0), (3, 0), (7, 0), (3, 0)]);
+        tree_grid.push(vec![(2, 0), (5, 0), (5, 0), (1, 0), (2, 0)]);
+        tree_grid.push(vec![(6, 0), (5, 0), (3, 0), (3, 0), (2, 0)]);
+        tree_grid.push(vec![(3, 0), (3, 0), (5, 0), (4, 0), (9, 0)]);
+        tree_grid.push(vec![(3, 0), (5, 0), (3, 0), (9, 0), (0, 0)]);
+        assert_eq!(check_to_east(&tree_grid, 2, 1), 2);
+    }
+
+    #[test]
+    fn test_check_to_east_05() {
+        let mut tree_grid: Vec<Vec<(i32, i32)>> = Vec::new();
+        tree_grid.push(vec![(3, 0), (0, 0), (3, 0), (7, 0), (3, 0)]);
+        tree_grid.push(vec![(2, 0), (5, 0), (5, 0), (1, 0), (2, 0)]);
+        tree_grid.push(vec![(6, 0), (5, 0), (3, 0), (3, 0), (2, 0)]);
+        tree_grid.push(vec![(3, 0), (3, 0), (5, 0), (4, 0), (9, 0)]);
+        tree_grid.push(vec![(3, 0), (5, 0), (3, 0), (9, 0), (0, 0)]);
+        assert_eq!(check_to_east(&tree_grid, 2, 3), 2);
+    }
+
+    #[test]
     fn test_check_to_south_01() {
         let mut tree_grid: Vec<Vec<(i32, i32)>> = Vec::new();
         tree_grid.push(vec![(3, 0), (0, 0), (3, 0), (7, 0), (3, 0)]);
@@ -266,7 +339,7 @@ mod tests {
         tree_grid.push(vec![(6, 0), (5, 0), (3, 0), (3, 0), (2, 0)]);
         tree_grid.push(vec![(3, 0), (3, 0), (5, 0), (4, 0), (9, 0)]);
         tree_grid.push(vec![(3, 0), (5, 0), (3, 0), (9, 0), (0, 0)]);
-        assert_eq!(check_to_south(&tree_grid, 3, 0), 3);
+        assert_eq!(check_to_south(&tree_grid, 3, 0), 4);
     }
 
     #[test]
@@ -288,7 +361,7 @@ mod tests {
         tree_grid.push(vec![(6, 0), (5, 0), (3, 0), (3, 0), (2, 0)]);
         tree_grid.push(vec![(3, 0), (3, 0), (5, 0), (4, 0), (9, 0)]);
         tree_grid.push(vec![(3, 0), (5, 0), (3, 0), (9, 0), (0, 0)]);
-        assert_eq!(check_to_west(&tree_grid, 4, 1), 1);
+        assert_eq!(check_to_west(&tree_grid, 4, 1), 2);
     }
 
     #[test]
@@ -300,6 +373,17 @@ mod tests {
         tree_grid.push(vec![(3, 0), (3, 0), (5, 0), (4, 0), (9, 0)]);
         tree_grid.push(vec![(3, 0), (5, 0), (3, 0), (9, 0), (0, 0)]);
         assert_eq!(check_to_west(&tree_grid, 3, 0), 3);
+    }
+
+    #[test]
+    fn test_check_to_west_03() {
+        let mut tree_grid: Vec<Vec<(i32, i32)>> = Vec::new();
+        tree_grid.push(vec![(3, 0), (0, 0), (3, 0), (7, 0), (3, 0)]);
+        tree_grid.push(vec![(2, 0), (5, 0), (5, 0), (1, 0), (2, 0)]);
+        tree_grid.push(vec![(6, 0), (5, 0), (3, 0), (3, 0), (2, 0)]);
+        tree_grid.push(vec![(3, 0), (3, 0), (5, 0), (4, 0), (9, 0)]);
+        tree_grid.push(vec![(3, 0), (5, 0), (3, 0), (9, 0), (0, 0)]);
+        assert_eq!(check_to_west(&tree_grid, 1, 1), 1);
     }
 }
 
