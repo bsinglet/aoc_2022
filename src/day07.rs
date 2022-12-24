@@ -199,6 +199,74 @@ fn process_lines(lines: &Vec<String>) -> i32 {
     total_of_small_directories
 }
 
+fn process_lines2(lines: &Vec<String>) -> i32 {
+    /*
+     Takes the command-line history of a device, determines the recursive 
+     sizes of all directories, then determines the smallest directory to delete
+     such that / will be no larger than 30_000_000 bytes.
+
+     See Part 2 of https://adventofcode.com/2022/day/7
+     */
+    // parse the input into directories and files
+    println!("Parsing input.");
+    let (mut directories, mut files) = parse_input(&lines);
+    println!("Done parsing input.");
+
+    // calculate the sizes of all of the subdirectories, starting from the 
+    // lowest levels up
+    files.sort_by_key(|x| x.depth);
+    files.reverse();
+    for each_file in files {
+        // apply file sizes to directory_sizes
+        let mut directory_index = 0;
+        while directory_index < directories.len() {
+            if directories[directory_index].name == each_file.parent {
+                break;
+            }
+            directory_index += 1;
+        }
+        if directory_index >= directories.len() {
+            eprintln!("Couldn't find directory matching the name {}", each_file.parent);
+        }
+        directories[directory_index].size += each_file.size;
+    }
+
+    // add the sizes of child directories to parent directories
+    directories.sort_by_key(|x| x.depth);
+    directories.reverse();
+    let mut each_directory_index = 0;
+    while each_directory_index < directories.len() {
+        // stop at root level
+        if directories[each_directory_index].depth == -1 {
+            break;
+        }
+        // add this directory's size to its parent directory
+        let mut directory_index = 0;
+        while directory_index < directories.len() {
+            if directories[directory_index].name == directories[each_directory_index].parent {
+                break;
+            }
+            directory_index += 1;
+        }
+        if directory_index >= directories.len() {
+            eprintln!("Couldn't find directory matching the name {}", directories[each_directory_index].parent);
+        }
+        directories[directory_index].size += directories[each_directory_index].size;
+        each_directory_index += 1;
+    }
+
+    // sum the size of the directories that are 100kB or less
+    directories.sort_by_key(|x| x.size);
+    let mut smallest_suitable_size: i32 = 30000000 - (70000000 - directories[directories.len()-1].size);
+    for each_directory in directories {
+        if each_directory.size >= smallest_suitable_size {
+            smallest_suitable_size = each_directory.size;
+            break;
+        }
+    }
+    smallest_suitable_size
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -260,10 +328,24 @@ mod tests {
         assert_eq!(go_down_one_level(&current_directory.as_str(), &sub_directory.as_str()), "/a/b/c/".to_string());
     }
 
+    #[test]
+    fn test_process_lines2_short() {
+        let lines = read_lines("day07_input_short.txt");
+        assert_eq!(process_lines2(&lines), 24933642);
+    }
+
+    #[test]
+    fn test_process_lines2_full() {
+        let lines = read_lines("day07_input.txt");
+        assert_eq!(process_lines2(&lines), 2948823);
+    }
+
 }
 
 pub fn main() {
     let result = read_lines("day07_input.txt");
     println!("Day 7:");
     println!("Part 1 - The sum of the total sizes of those directories is: {}", process_lines(&result));
+    println!("Part 2 - The smallest directory we can delete to free up enough space is {}", 
+        process_lines2(&result));
 }
