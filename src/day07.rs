@@ -8,7 +8,6 @@ pub struct FileOrDirectory {
     parent: String,
     depth: i32,
     size: i32,
-    children: Vec<String>,
 }
 
 fn read_lines(filename: &str) -> Vec<String> {
@@ -35,7 +34,7 @@ fn go_up_one_level(current_directory: &str) -> String {
     if one_deep.is_match(&current_directory) {
         result = "/".to_string();
     }else {
-        let get_parent = Regex::new(r"^(/\w+/(\w/)*)\w/$").unwrap();
+        let get_parent = Regex::new(r"^(/\w+/(\w+/)*)\w+/$").unwrap();
         result = get_parent.captures(current_directory).unwrap().get(1).unwrap().as_str().to_string()
     }
     result
@@ -71,6 +70,14 @@ fn parse_input(lines: &Vec<String>) -> (Vec<FileOrDirectory>, Vec<FileOrDirector
     let mut current_directory = "/".to_string();
     let mut current_depth = 0;
     let mut index: usize = 0;
+    // don't forget to initialize "/"!
+    directories.push(FileOrDirectory{
+        parent: "/".to_string(),
+        depth: -1,
+        size: 0,
+        name: "/".to_string(),
+    });
+    // process the command history
     while index < lines.len()-1 {
         if ls_command.is_match(&lines[index].as_str()) {
             //println!("Recognized ls line {} on line {}", &lines[index], index);
@@ -87,7 +94,6 @@ fn parse_input(lines: &Vec<String>) -> (Vec<FileOrDirectory>, Vec<FileOrDirector
                         depth: current_depth,
                         size: 0,
                         name: construct_full_directory_path(&current_directory, &directory_line.captures(&lines[index]).unwrap().get(1).unwrap().as_str()),
-                        children: Vec::new(),
                     };
                     directories.push(directory);
                 }else if file_line.is_match(&lines[index].as_str()) {
@@ -97,7 +103,6 @@ fn parse_input(lines: &Vec<String>) -> (Vec<FileOrDirectory>, Vec<FileOrDirector
                         depth: current_depth,
                         size: i32::from_str(file_line.captures(&lines[index]).unwrap().get(1).unwrap().as_str()).unwrap(),
                         name: construct_full_path(&current_directory, &file_line.captures(&lines[index]).unwrap().get(2).unwrap().as_str()),
-                        children: Vec::new(),
                     };
                     files.push(file);
                 }else {
@@ -142,34 +147,68 @@ fn process_lines(lines: &Vec<String>) -> i32 {
      See Part 1 of https://adventofcode.com/2022/day/7
      */
     // parse the input into directories and files
+    println!("Parsing input.");
     let (mut directories, mut files) = parse_input(&lines);
     println!("Done parsing input.");
 
-    for file in &files {
+    /*for file in &files {
         println!("File {} with parent {}", file.name, file.parent);
     }
 
     for directory in &directories {
         println!("Directory {} with parent {}", directory.name, directory.parent);
-    }
+    }*/
 
     // calculate the sizes of all of the subdirectories, starting from the 
     // lowest levels up
     files.sort_by_key(|x| x.depth);
     files.reverse();
-    for _each_file in files {
+    for each_file in files {
         // apply file sizes to directory_sizes
+        let mut directory_index = 0;
+        while directory_index < directories.len() {
+            if directories[directory_index].name == each_file.parent {
+                break;
+            }
+            directory_index += 1;
+        }
+        if directory_index >= directories.len() {
+            eprintln!("Couldn't find directory matching the name {}", each_file.parent);
+        }
+        directories[directory_index].size += each_file.size;
     }
+
+    /*for directory in &directories {
+        println!("Directory {} directly contains files of total size {}", directory.name, directory.size);
+    }*/
+
     // add the sizes of child directories to parent directories
     directories.sort_by_key(|x| x.depth);
     directories.reverse();
-    for each_directory in &directories {
+    let mut each_directory_index = 0;
+    while each_directory_index < directories.len() {
         // stop at root level
-        if each_directory.depth == 0 {
+        if directories[each_directory_index].depth == -1 {
             break;
         }
         // add this directory's size to its parent directory
+        let mut directory_index = 0;
+        while directory_index < directories.len() {
+            if directories[directory_index].name == directories[each_directory_index].parent {
+                break;
+            }
+            directory_index += 1;
+        }
+        if directory_index >= directories.len() {
+            eprintln!("Couldn't find directory matching the name {}", directories[each_directory_index].parent);
+        }
+        directories[directory_index].size += directories[each_directory_index].size;
+        each_directory_index += 1;
     }
+
+    /*for directory in &directories {
+        println!("Directory {} directly contains files of total size {}", directory.name, directory.size);
+    }*/
 
     // sum the size of the directories that are 100kB or less
     let mut total_of_small_directories: i32 = 0;
@@ -187,11 +226,17 @@ fn process_lines(lines: &Vec<String>) -> i32 {
 mod tests {
     use super::*;
 
-    /*#[test]
+    #[test]
     fn test_process_lines_short() {
         let lines = read_lines("day07_input_short.txt");
-        assert_eq!(process_lines(&lines), 7);
-    }*/
+        assert_eq!(process_lines(&lines), 95437);
+    }
+
+    #[test]
+    fn test_process_lines_full() {
+        let lines = read_lines("day07_input.txt");
+        assert_eq!(process_lines(&lines), 1453349);
+    }
 
     #[test]
     fn test_go_up_one_level_01() {
@@ -209,6 +254,12 @@ mod tests {
     fn test_go_up_one_level_03() {
         let current_directory: String = "/a/b/c/".to_string();
         assert_eq!(go_up_one_level(&current_directory.as_str()), "/a/b/".to_string());
+    }
+
+    #[test]
+    fn test_go_up_one_level_04() {
+        let current_directory: String = "/bfqzjjct/cgcqpjpn/phslrcw/jnzjq/".to_string();
+        assert_eq!(go_up_one_level(&current_directory.as_str()), "/bfqzjjct/cgcqpjpn/phslrcw/".to_string());
     }
 
     #[test]
@@ -235,7 +286,7 @@ mod tests {
 }
 
 pub fn main() {
-    let result = read_lines("day07_input_short.txt");
+    let result = read_lines("day07_input.txt");
     println!("Day 7:");
     println!("Part 1 - The sum of the total sizes of those directories is: {}", process_lines(&result));
 }
