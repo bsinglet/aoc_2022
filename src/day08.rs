@@ -133,7 +133,7 @@ fn check_to_east(tree_grid: &Vec<Vec<(i32, i32)>>, x_index: usize, y_index: usiz
     let tree_height: i32 = tree_grid[y_index][x_index].0;
     let mut sub_score: i32 = 0;
     for inner_x_index in x_index+1..tree_grid.len() {
-        println!("Comparing ({}, {}) with ({}, {})", x_index, y_index, inner_x_index, y_index);
+        //println!("Comparing ({}, {}) with ({}, {})", x_index, y_index, inner_x_index, y_index);
         if tree_grid[y_index][inner_x_index].0 < tree_height {
             sub_score += 1;
         }else {
@@ -194,8 +194,8 @@ fn process_lines2(lines: &Vec<String>) -> i32 {
             tree_scores.2 += check_to_west(&tree_grid, x_index, y_index);
             tree_grid[y_index][x_index].1 = tree_scores.0 * tree_scores.1 * tree_scores.2 * tree_scores.3;
 
-            println!("({}, {}) has scenic score {}*{}*{}*{} = {}.", x_index, y_index, 
-                tree_scores.1, tree_scores.0, tree_scores.3, tree_scores.2, tree_grid[y_index][x_index].1);
+            //println!("({}, {}) has scenic score {}*{}*{}*{} = {}.", x_index, y_index, 
+            //    tree_scores.1, tree_scores.0, tree_scores.3, tree_scores.2, tree_grid[y_index][x_index].1);
             if tree_grid[y_index][x_index].1 > heighest_score {
                 heighest_score = tree_grid[y_index][x_index].1;
             }
@@ -227,21 +227,11 @@ mod tests {
         assert_eq!(process_lines2(&lines), 8);
     }
 
-    /*#[test]
+    #[test]
     fn test_process_lines2_full() {
         let lines = read_lines("day08_input.txt");
-        assert_eq!(process_lines2(&lines), 8);
-    }*/
-
-    /*#[test]
-    fn test_process_lines2_01() {
-        let lines: Vec<String> = vec!["00000".to_string(),
-                                      "00000".to_string(),
-                                      "00000".to_string(),
-                                      "00000".to_string(),
-                                      "00000".to_string()];
-        assert_eq!(process_lines2(&lines), 8);
-    }*/
+        assert_eq!(process_lines2(&lines), 345744);
+    }
 
     #[test]
     fn test_check_to_north_01() {
@@ -388,8 +378,8 @@ mod tests {
 }
 
 pub fn main() {
-    let result = read_lines("day08_input_short.txt");
+    let result = read_lines("day08_input.txt");
     println!("Day 8:");
     println!("Part 1 - The number of visible trees: {}", process_lines(&result));
-    println!("Part 1 - The highest scenic score possible for any tree is: {}", process_lines2(&result));
+    println!("Part 2 - The highest scenic score possible for any tree is: {}", process_lines2(&result));
 }
