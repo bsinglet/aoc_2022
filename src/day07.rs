@@ -80,7 +80,6 @@ fn parse_input(lines: &Vec<String>) -> (Vec<FileOrDirectory>, Vec<FileOrDirector
     // process the command history
     while index < lines.len()-1 {
         if ls_command.is_match(&lines[index].as_str()) {
-            //println!("Recognized ls line {} on line {}", &lines[index], index);
             index += 1;
             // the next unknown many lines are files or directories inside of current_directory
             loop {
@@ -88,7 +87,6 @@ fn parse_input(lines: &Vec<String>) -> (Vec<FileOrDirectory>, Vec<FileOrDirector
                     break;
                 }
                 if directory_line.is_match(&lines[index].as_str()) {
-                    //println!("Recognized subdirectory {}", &lines[index]);
                     let directory = FileOrDirectory{
                         parent: current_directory.clone(),
                         depth: current_depth,
@@ -97,7 +95,6 @@ fn parse_input(lines: &Vec<String>) -> (Vec<FileOrDirectory>, Vec<FileOrDirector
                     };
                     directories.push(directory);
                 }else if file_line.is_match(&lines[index].as_str()) {
-                    //println!("Recognized file listing {}", &lines[index]);
                     let file = FileOrDirectory{
                         parent: current_directory.clone(),
                         depth: current_depth,
@@ -106,13 +103,11 @@ fn parse_input(lines: &Vec<String>) -> (Vec<FileOrDirectory>, Vec<FileOrDirector
                     };
                     files.push(file);
                 }else {
-                    //println!("Done reading directory contents with new line {} on line {}", &lines[index], index);
                     break;
                 }
                 index += 1;
             }
         }else if cd_command.is_match(&lines[index].as_str()) {
-            //println!("Recognized cd line {}", &lines[index]);
             match cd_command.captures(&lines[index]).unwrap().get(1).unwrap().as_str() {
                 "/" => {
                     current_directory = "/".to_string().clone();
@@ -124,10 +119,8 @@ fn parse_input(lines: &Vec<String>) -> (Vec<FileOrDirectory>, Vec<FileOrDirector
                     current_depth -= 1;
                 },
                 _ => {
-                    //println!("Moving down from {}", &current_directory);
                     let new_directory = go_down_one_level(&current_directory, &cd_command.captures(&lines[index]).unwrap().get(1).unwrap().as_str());
                     current_directory = new_directory.clone();
-                    //println!("to {}", &current_directory);
                     current_depth += 1;       
                 }
             }
@@ -151,14 +144,6 @@ fn process_lines(lines: &Vec<String>) -> i32 {
     let (mut directories, mut files) = parse_input(&lines);
     println!("Done parsing input.");
 
-    /*for file in &files {
-        println!("File {} with parent {}", file.name, file.parent);
-    }
-
-    for directory in &directories {
-        println!("Directory {} with parent {}", directory.name, directory.parent);
-    }*/
-
     // calculate the sizes of all of the subdirectories, starting from the 
     // lowest levels up
     files.sort_by_key(|x| x.depth);
@@ -177,10 +162,6 @@ fn process_lines(lines: &Vec<String>) -> i32 {
         }
         directories[directory_index].size += each_file.size;
     }
-
-    /*for directory in &directories {
-        println!("Directory {} directly contains files of total size {}", directory.name, directory.size);
-    }*/
 
     // add the sizes of child directories to parent directories
     directories.sort_by_key(|x| x.depth);
@@ -205,10 +186,6 @@ fn process_lines(lines: &Vec<String>) -> i32 {
         directories[directory_index].size += directories[each_directory_index].size;
         each_directory_index += 1;
     }
-
-    /*for directory in &directories {
-        println!("Directory {} directly contains files of total size {}", directory.name, directory.size);
-    }*/
 
     // sum the size of the directories that are 100kB or less
     let mut total_of_small_directories: i32 = 0;
