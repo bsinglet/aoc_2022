@@ -232,7 +232,7 @@ mod tests {
     #[test]
     fn test_process_lines2_full() {
         let lines = read_lines("day09_input.txt");
-        assert_eq!(process_lines2(&lines), 0);
+        assert_eq!(process_lines2(&lines), 2658);
     }
 
     #[test]
@@ -254,11 +254,6 @@ mod tests {
     fn test_process_lines2_04() {
         assert_eq!(process_lines2(&vec!["R 5".to_string(), "U 8".to_string(), "L 8".to_string()]), 4);
     }
-
-    /*#[test]
-    fn test_process_lines2_3() {
-        assert_eq!(process_lines2(&vec!["R 5".to_string(), "U 8".to_string(), "L 8".to_string(), "D 3".to_string(), "R 17".to_string(), "D 10".to_string(), "L 25".to_string(), "U 20".to_string()]), 2);
-    }*/
 }
 
 pub fn main() {
