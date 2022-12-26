@@ -97,6 +97,61 @@ fn process_lines(lines: &Vec<String>) -> i32 {
     visited_positions.len().try_into().unwrap()
 }
 
+fn process_lines2(lines: &Vec<String>) -> i32 {
+    /*
+    Counts the number of positions the tail visits at least once. The twist for
+    Part 2, though, is that the rope has 1 head and 8 tails now, each tail 
+    acting as the head for the tail behind it. We're only counting the visited
+    positions of the final tail.
+
+    See Part 2 of https://adventofcode.com/2022/day/9
+    */
+    let mut visited_positions: HashSet<(i32, i32)> = HashSet::new();
+    let mut tails: Vec<(i32, i32)> = Vec::new();
+    let mut head_x_pos: i32 = 0;
+    let mut head_y_pos: i32 = 0;
+
+    //initialize tail positions
+    for _tail_index in 0..9 {
+        tails.push((0, 0));
+    }
+
+    // process the moves
+    for each_instruction in lines {
+        let direction = each_instruction.split(" ").next().unwrap();
+        let distance = i32::from_str(each_instruction.split(" ").skip(1).next().unwrap()).unwrap();
+        //println!("{} {}", direction, distance);
+        for _move_index in 0..distance {
+            match direction {
+                "U" => head_y_pos -= 1,
+                "D" => head_y_pos += 1,
+                "L" => head_x_pos -= 1,
+                "R" => head_x_pos += 1,
+                _ => println!("Unrecognized direction {}", direction),
+            };
+
+            //println!("New head position ({}, {})", head_x_pos, head_y_pos);
+
+            // each tail needs to catch up with the head/tail in front of it
+            let mut previous_tail_x = head_x_pos;
+            let mut previous_tail_y = head_y_pos;
+            for tail_index in 0..tails.len() {
+                (_, _, tails[tail_index].0, tails[tail_index].1) = move_tail(previous_tail_x, previous_tail_y, tails[tail_index].0, tails[tail_index].1);
+                previous_tail_x = tails[tail_index].0;
+                previous_tail_y = tails[tail_index].1;
+                //println!("New tail {} position ({}, {})", tail_index, previous_tail_x, previous_tail_y);
+            }
+            
+            //println!("New final tail position ({}, {})", tails[8].0, tails[8].1);
+
+            // mark tail's current position as visited
+            visited_positions.insert((tails[8].0, tails[8].1));
+        }
+    }
+
+    visited_positions.len().try_into().unwrap()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -167,10 +222,48 @@ mod tests {
     fn test_process_lines_01() {
         assert_eq!(process_lines(&vec!["R 4".to_string(), "U 4".to_string()]), 7);
     }
+
+    #[test]
+    fn test_process_lines2_short() {
+        let lines = read_lines("day09_input_short2.txt");
+        assert_eq!(process_lines2(&lines), 36);
+    }
+
+    #[test]
+    fn test_process_lines2_full() {
+        let lines = read_lines("day09_input.txt");
+        assert_eq!(process_lines2(&lines), 0);
+    }
+
+    #[test]
+    fn test_process_lines2_01() {
+        assert_eq!(process_lines2(&vec!["R 4".to_string()]), 1);
+    }
+
+    #[test]
+    fn test_process_lines2_02() {
+        assert_eq!(process_lines2(&vec!["R 10".to_string()]), 2);
+    }
+
+    #[test]
+    fn test_process_lines2_03() {
+        assert_eq!(process_lines2(&vec!["R 5".to_string(), "U 8".to_string()]), 1);
+    }
+
+    #[test]
+    fn test_process_lines2_04() {
+        assert_eq!(process_lines2(&vec!["R 5".to_string(), "U 8".to_string(), "L 8".to_string()]), 4);
+    }
+
+    /*#[test]
+    fn test_process_lines2_3() {
+        assert_eq!(process_lines2(&vec!["R 5".to_string(), "U 8".to_string(), "L 8".to_string(), "D 3".to_string(), "R 17".to_string(), "D 10".to_string(), "L 25".to_string(), "U 20".to_string()]), 2);
+    }*/
 }
 
 pub fn main() {
-    let result = read_lines("day09_input_short.txt");
+    let result = read_lines("day09_input_short2.txt");
     println!("Day 9:");
     println!("Part 1 - The number of positions the tail visits at least once is: {}", process_lines(&result));
+    println!("Part 2 - The number of positions the tail visits at least once is: {}", process_lines2(&result));
 }
