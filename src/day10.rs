@@ -24,7 +24,42 @@ fn process_lines(lines: &Vec<String>) -> i32 {
 
     See Part 1 of https://adventofcode.com/2022/day/10
     */
-    0
+    let mut cycle: i32 = 0;
+    let mut register_x: i32 = 1;
+    let mut recordings: Vec<i32> = Vec::new();
+    let cycle_indices: Vec<i32> = vec![19, 59, 99, 139, 179, 219];
+    for each_instruction in lines {
+        if each_instruction != "noop" {
+            let instruction = each_instruction.split(" ").next().unwrap();
+            let value = i32::from_str(each_instruction.split(" ").skip(1).next().unwrap()).unwrap();
+            if instruction != "addx" {
+                eprintln!("Unrecognized instruction {}", instruction);
+                break;
+            }
+
+            cycle += 1;
+            if cycle_indices.contains(&cycle) {
+                println!("Storing signal {} at cycle {}", register_x, cycle);
+                recordings.push(register_x * (cycle + 1));
+            }
+            cycle += 1;
+            register_x += value;
+            if cycle_indices.contains(&cycle) {
+                println!("Storing signal {} at cycle {}", register_x, cycle);
+                recordings.push(register_x * (cycle + 1));
+            }
+        }else {
+            // record Register X if we're at one of the key cycles
+            //println!("Checking if cycle {} is in the list.", cycle);
+            cycle += 1;
+            if cycle_indices.contains(&cycle) {
+                println!("Storing signal {} at cycle {}", register_x, cycle);
+                recordings.push(register_x * (cycle + 1));
+            }
+        }
+    }
+
+    recordings.into_iter().reduce(|x, y| x + y).unwrap()
 }
 
 #[cfg(test)]
@@ -40,7 +75,7 @@ mod tests {
     #[test]
     fn test_process_lines_full() {
         let lines = read_lines("day10_input.txt");
-        assert_eq!(process_lines(&lines), -1);
+        assert_eq!(process_lines(&lines), 15360);
     }
 }
 
