@@ -38,13 +38,13 @@ fn process_lines(lines: &Vec<String>) -> i32 {
 
             cycle += 1;
             if cycle_indices.contains(&cycle) {
-                println!("Storing signal {} at cycle {}", register_x, cycle);
+                //println!("Storing signal {} at cycle {}", register_x, cycle);
                 recordings.push(register_x * (cycle + 1));
             }
             cycle += 1;
             register_x += value;
             if cycle_indices.contains(&cycle) {
-                println!("Storing signal {} at cycle {}", register_x, cycle);
+                //println!("Storing signal {} at cycle {}", register_x, cycle);
                 recordings.push(register_x * (cycle + 1));
             }
         }else {
@@ -52,7 +52,7 @@ fn process_lines(lines: &Vec<String>) -> i32 {
             //println!("Checking if cycle {} is in the list.", cycle);
             cycle += 1;
             if cycle_indices.contains(&cycle) {
-                println!("Storing signal {} at cycle {}", register_x, cycle);
+                //println!("Storing signal {} at cycle {}", register_x, cycle);
                 recordings.push(register_x * (cycle + 1));
             }
         }
@@ -83,8 +83,8 @@ fn process_lines2(lines: &Vec<String>) -> Vec<String> {
     }
     // process the instructions
     for each_instruction in lines {
-        if cycle == register_x - 1 || cycle == register_x || cycle == register_x + 1 {
-            println!("Storing signal {} at cycle {}", register_x, cycle);
+        if (cycle % 40) == register_x - 1 || (cycle % 40) == register_x || (cycle % 40) == register_x + 1 {
+            //println!("Storing signal {} at cycle {}", register_x, cycle);
             pixels[cycle as usize] = '#';
         }else {
             pixels[cycle as usize] = '.';
@@ -93,22 +93,22 @@ fn process_lines2(lines: &Vec<String>) -> Vec<String> {
         if each_instruction != "noop" {
             let instruction = each_instruction.split(" ").next().unwrap();
             let value = i32::from_str(each_instruction.split(" ").skip(1).next().unwrap()).unwrap();
-            println!("Cycle {}, register_x {}: {} {}", cycle, register_x, instruction, value);
+            //println!("Cycle {}, register_x {}: {} {}", cycle, register_x, instruction, value);
             if instruction != "addx" {
                 eprintln!("Unrecognized instruction {}", instruction);
                 break;
             }
             cycle += 1;
-            if cycle == register_x - 1 || cycle == register_x || cycle == register_x + 1 {
-                println!("Storing signal {} at cycle {}", register_x, cycle);
+            if (cycle % 40) == register_x - 1 || (cycle % 40) == register_x || (cycle % 40) == register_x + 1 {
+                //println!("Storing signal {} at cycle {}", register_x, cycle);
                 pixels[cycle as usize] = '#';
             }else {
                 pixels[cycle as usize] = '.';
             }
             cycle += 1;
             register_x += value;
-            if cycle == register_x - 1 || cycle == register_x || cycle == register_x + 1 {
-                println!("Storing signal {} at cycle {}", register_x, cycle);
+            if (cycle % 40) == register_x - 1 || (cycle % 40) == register_x || (cycle % 40) == register_x + 1 {
+                //println!("Storing signal {} at cycle {}", register_x, cycle);
                 pixels[cycle as usize] = '#';
             }else {
                 pixels[cycle as usize] = '.';
@@ -150,37 +150,21 @@ mod tests {
         assert_eq!(process_lines2(&lines), output);
     }
 
-    /*#[test]
+    #[test]
     fn test_process_lines2_full() {
         let lines = read_lines("day10_input.txt");
-        let output:Vec<String> = vec!["##..##..##..##..##..##..##..##..##..##..".to_string(),
-                                      "###...###...###...###...###...###...###.".to_string(),
-                                      "####....####....####....####....####....".to_string(),
-                                      "#####.....#####.....#####.....#####.....".to_string(),
-                                      "######......######......######......####".to_string(),
-                                      "#######.......#######.......#######.....".to_string()];
+        let output:Vec<String> = vec!["###..#..#.#....#..#...##..##..####..##..".to_string(),
+                                      "#..#.#..#.#....#..#....#.#..#....#.#..#.".to_string(),
+                                      "#..#.####.#....####....#.#......#..#..#.".to_string(),
+                                      "###..#..#.#....#..#....#.#.##..#...####.".to_string(),
+                                      "#....#..#.#....#..#.#..#.#..#.#....#..#.".to_string(),
+                                      "#....#..#.####.#..#..##...###.####.#..#.".to_string()];
         assert_eq!(process_lines2(&lines), output);
-    }*/
-
-    /*#[test]
-    fn test_process_lines2_01() {
-        let lines = vec!["addx 15".to_string(),
-                                      "addx -11".to_string(),
-                                      "noop".to_string(),
-                                      "noop".to_string(),
-                                      "noop".to_string()];
-        let output:Vec<String> = vec!["##......................................".to_string(),
-                                      "........................................".to_string(),
-                                      "........................................".to_string(),
-                                      "........................................".to_string(),
-                                      "........................................".to_string(),
-                                      "........................................".to_string()];
-        assert_eq!(process_lines2(&lines), output);
-    }*/
+    }
 }
 
 pub fn main() {
-    let result = read_lines("day10_input_short.txt");
+    let result = read_lines("day10_input.txt");
     println!("Day 10:");
     println!("Part 1 - The sum of these six signal strengths is: {}", process_lines(&result));
     println!("Part 1 - The CRT screen outputs:");
