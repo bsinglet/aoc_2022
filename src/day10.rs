@@ -167,7 +167,7 @@ pub fn main() {
     let result = read_lines("day10_input.txt");
     println!("Day 10:");
     println!("Part 1 - The sum of these six signal strengths is: {}", process_lines(&result));
-    println!("Part 1 - The CRT screen outputs:");
+    println!("Part 2 - The CRT screen outputs:");
     for each_line in process_lines2(&result) {
         println!("{}", each_line);
     }
