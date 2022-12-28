@@ -65,8 +65,11 @@ pub struct Monkey {
 impl fmt::Display for Monkey {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let mut result: String = "".to_string();
-        result += &format!("Carrying {} items\n", self.inventory.len()).as_str();
-        result += "Operation: new = ";
+        result += "Carrying items: ";
+        for each_item in &self.inventory {
+            result += &format!("{}, ", each_item).as_str();
+        }
+        result += "\nOperation: new = ";
         if self.argument0 == ArgumentType::Int {
             result += format!("{} ", self.argument0_int).as_str();
         }else {
@@ -103,7 +106,7 @@ fn parse_lines(lines: &Vec<String>) -> Vec<Monkey> {
     let mut monkeys: Vec<Monkey> = Vec::new();
 
     let monkey_line = Regex::new(r"^\s*Monkey\s+(\d+):\s*$").unwrap();
-    let starting_line = Regex::new(r"^\s*Starting\sitems:\s*(\d+,?\s?)+\s*$").unwrap();
+    let starting_line = Regex::new(r"^\s*Starting\s+items:\s+(\d+)((,\s+\d+)+)?\s*$").unwrap();
     let operation_line = Regex::new(r"^\s*Operation:\s*new\s+=\s+(\w+)\s+(\+|\*|-|/)\s+(\w+)\s*$").unwrap();
     let test_line = Regex::new(r"^\s*Test:\s*divisible\s+by\s+(\d+)\s*$").unwrap();
     let true_line = Regex::new(r"^\s*If\s+true:\s+throw\s+to\s+monkey\s+(\d+)\s*$").unwrap();
@@ -128,8 +131,14 @@ fn parse_lines(lines: &Vec<String>) -> Vec<Monkey> {
             break;
         }
         index += 1;
-        for each_item in starting_line.captures(&lines[index]).unwrap().get(1).unwrap().as_str().split(",") {
-            monkey.inventory.push_back(i32::from_str(each_item).unwrap());
+        monkey.inventory.push_back(i32::from_str(starting_line.captures(&lines[index]).unwrap().get(1).unwrap().as_str()).unwrap());
+        if starting_line.captures(&lines[index]).unwrap().get(3).is_some() {
+            //println!("{}", starting_line.captures(&lines[index]).unwrap().get(2).unwrap().as_str());
+            for each_item in starting_line.captures(&lines[index]).unwrap().get(2).unwrap().as_str().split(", ") {
+                if each_item.trim() != "" {
+                    monkey.inventory.push_back(i32::from_str(each_item).unwrap());
+                }
+            }
         }
         index +=1;
         let operation_captures = operation_line.captures(&lines[index]).unwrap();
@@ -189,10 +198,16 @@ fn process_lines(lines: &Vec<String>) -> i32 {
 
     // simulate 20 rounds of monkey business
     for round in 0..20 {
-        println!("Round: {}", round);
+        //println!("Round: {}", round);
+        continue;
         for monkey_index in 0..monkeys.len() {
-            println!("Simulating Monkey {}", monkey_index);
+            //println!("Simulating Monkey {}", monkey_index);
+            continue;
         }
+    }
+
+    for each_monkey in monkeys {
+        println!("{}", each_monkey);
     }
 
     0
@@ -218,6 +233,5 @@ mod tests {
 pub fn main() {
     let result = read_lines("day11_input_short.txt");
     println!("Day 11:");
-    println!("Part 1 - The level of monkey business after 20 rounds of");
-    println!("stuff-slinging simian shenanigans is: {}", process_lines(&result));
+    println!("Part 1 - The level of monkey business after 20 rounds of stuff-slinging simian shenanigans is: {}", process_lines(&result));
 }
