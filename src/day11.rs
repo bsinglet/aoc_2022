@@ -195,22 +195,55 @@ fn process_lines(lines: &Vec<String>) -> i32 {
     let mut times_inspected_items: Vec<i32> = Vec::new();
     // initialize the list of monkeys using the challenge input
     let mut monkeys: Vec<Monkey> = parse_lines(&lines);
+    for _ in 0..monkeys.len() {
+        times_inspected_items.push(0);
+    }
 
     // simulate 20 rounds of monkey business
     for round in 0..20 {
         //println!("Round: {}", round);
-        continue;
         for monkey_index in 0..monkeys.len() {
             //println!("Simulating Monkey {}", monkey_index);
-            continue;
+            while monkeys[monkey_index].inventory.len() > 0 {
+                let mut worry_level: i32 = monkeys[monkey_index].inventory.pop_front().unwrap();
+                times_inspected_items[monkey_index] += 1;
+                // apply operation to worry level
+                let argument_0: i32;
+                let argument_1: i32;
+                if monkeys[monkey_index].argument0 == ArgumentType::Old {
+                    argument_0 = worry_level;
+                }else {
+                    argument_0 = monkeys[monkey_index].argument0_int;
+                }
+                if monkeys[monkey_index].argument1 == ArgumentType::Old {
+                    argument_1 = worry_level;
+                }else {
+                    argument_1 = monkeys[monkey_index].argument1_int;
+                }
+                worry_level = match monkeys[monkey_index].operation {
+                    OperationType::Plus => argument_0 + argument_1,
+                    OperationType::Subtract => argument_0 - argument_1,
+                    OperationType::Times => argument_0 * argument_1,
+                    OperationType::Divide => argument_0 / argument_1,
+                };
+                // worry level divides by three after inspection and before testing
+                worry_level = (f64::from(worry_level) / 3.0).floor() as i32;
+                // apply the monkey test to figure out which monkey to send the value to
+                let destination: usize;
+                if worry_level % monkeys[monkey_index].test_divisible_by == 0 {
+                    destination = monkeys[monkey_index].true_destination as usize;
+                }else {
+                    destination = monkeys[monkey_index].false_destination as usize;
+                }
+                // send the item to that monkey
+                monkeys[destination].inventory.push_back(worry_level);
+            }
         }
     }
 
-    for each_monkey in monkeys {
-        println!("{}", each_monkey);
-    }
-
-    0
+    times_inspected_items.sort();
+    times_inspected_items.reverse();
+    times_inspected_items[0] * times_inspected_items[1]
 }
 
 #[cfg(test)]
@@ -226,7 +259,7 @@ mod tests {
     #[test]
     fn test_process_lines_full() {
         let lines = read_lines("day11_input.txt");
-        assert_eq!(process_lines(&lines), -1);
+        assert_eq!(process_lines(&lines), 108240);
     }
 }
 
