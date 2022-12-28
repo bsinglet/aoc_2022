@@ -3,6 +3,7 @@ use std::fmt;
 use std::str::FromStr;
 use std::collections::VecDeque;
 use regex::Regex;
+use num::bigint::{BigInt, Sign};
 
 #[derive(Debug)]
 #[derive(PartialEq)]
@@ -48,15 +49,28 @@ impl fmt::Display for ArgumentType {
 
 #[derive(Debug)]
 pub struct Monkey {
-    inventory: VecDeque<i32>,
+    inventory: VecDeque<i128>,
     operation: OperationType,
     argument0: ArgumentType,
     argument1: ArgumentType,
-    argument0_int: i32,
-    argument1_int: i32,
-    test_divisible_by: i32,
-    true_destination: i32,
-    false_destination: i32,
+    argument0_int: i128,
+    argument1_int: i128,
+    test_divisible_by: i128,
+    true_destination: i128,
+    false_destination: i128,
+}
+
+#[derive(Debug)]
+pub struct Monkey2 {
+    inventory: VecDeque<BigInt>,
+    operation: OperationType,
+    argument0: ArgumentType,
+    argument1: ArgumentType,
+    argument0_int: BigInt,
+    argument1_int: BigInt,
+    test_divisible_by: BigInt,
+    true_destination: usize,
+    false_destination: usize,
 }
 
 /*
@@ -131,12 +145,12 @@ fn parse_lines(lines: &Vec<String>) -> Vec<Monkey> {
             break;
         }
         index += 1;
-        monkey.inventory.push_back(i32::from_str(starting_line.captures(&lines[index]).unwrap().get(1).unwrap().as_str()).unwrap());
+        monkey.inventory.push_back(i128::from_str(starting_line.captures(&lines[index]).unwrap().get(1).unwrap().as_str()).unwrap());
         if starting_line.captures(&lines[index]).unwrap().get(3).is_some() {
             //println!("{}", starting_line.captures(&lines[index]).unwrap().get(2).unwrap().as_str());
             for each_item in starting_line.captures(&lines[index]).unwrap().get(2).unwrap().as_str().split(", ") {
                 if each_item.trim() != "" {
-                    monkey.inventory.push_back(i32::from_str(each_item).unwrap());
+                    monkey.inventory.push_back(i128::from_str(each_item).unwrap());
                 }
             }
         }
@@ -155,7 +169,7 @@ fn parse_lines(lines: &Vec<String>) -> Vec<Monkey> {
             _     => ArgumentType::Int,
         };
         if monkey.argument0 == ArgumentType::Int {
-            monkey.argument0_int = i32::from_str(operation_captures.get(1).unwrap().as_str()).unwrap();
+            monkey.argument0_int = i128::from_str(operation_captures.get(1).unwrap().as_str()).unwrap();
         }
         monkey.argument1 = match operation_captures.get(3).unwrap().as_str() {
             "new" => ArgumentType::New,
@@ -163,14 +177,14 @@ fn parse_lines(lines: &Vec<String>) -> Vec<Monkey> {
             _     => ArgumentType::Int,
         };
         if monkey.argument1 == ArgumentType::Int {
-            monkey.argument1_int = i32::from_str(operation_captures.get(3).unwrap().as_str()).unwrap();
+            monkey.argument1_int = i128::from_str(operation_captures.get(3).unwrap().as_str()).unwrap();
         }
         index += 1;
-        monkey.test_divisible_by = i32::from_str(test_line.captures(&lines[index]).unwrap().get(1).unwrap().as_str()).unwrap();
+        monkey.test_divisible_by = i128::from_str(test_line.captures(&lines[index]).unwrap().get(1).unwrap().as_str()).unwrap();
         index += 1;
-        monkey.true_destination = i32::from_str(true_line.captures(&lines[index]).unwrap().get(1).unwrap().as_str()).unwrap();
+        monkey.true_destination = i128::from_str(true_line.captures(&lines[index]).unwrap().get(1).unwrap().as_str()).unwrap();
         index += 1;
-        monkey.false_destination = i32::from_str(false_line.captures(&lines[index]).unwrap().get(1).unwrap().as_str()).unwrap();
+        monkey.false_destination = i128::from_str(false_line.captures(&lines[index]).unwrap().get(1).unwrap().as_str()).unwrap();
         // skip the blank line between monkeys
         monkeys.push(monkey);
         index += 2;
@@ -178,7 +192,83 @@ fn parse_lines(lines: &Vec<String>) -> Vec<Monkey> {
     monkeys
 }
 
-fn process_lines(lines: &Vec<String>) -> i32 {
+fn parse_lines2(lines: &Vec<String>) -> Vec<Monkey2> {
+    let mut monkeys: Vec<Monkey2> = Vec::new();
+
+    let monkey_line = Regex::new(r"^\s*Monkey\s+(\d+):\s*$").unwrap();
+    let starting_line = Regex::new(r"^\s*Starting\s+items:\s+(\d+)((,\s+\d+)+)?\s*$").unwrap();
+    let operation_line = Regex::new(r"^\s*Operation:\s*new\s+=\s+(\w+)\s+(\+|\*|-|/)\s+(\w+)\s*$").unwrap();
+    let test_line = Regex::new(r"^\s*Test:\s*divisible\s+by\s+(\d+)\s*$").unwrap();
+    let true_line = Regex::new(r"^\s*If\s+true:\s+throw\s+to\s+monkey\s+(\d+)\s*$").unwrap();
+    let false_line = Regex::new(r"^\s*If\s+false:\s+throw\s+to\s+monkey\s+(\d+)\s*$").unwrap();
+
+    // initialize all the monkeys
+    let mut index: usize = 0;
+    while index < lines.len() {
+        let mut monkey: Monkey2 = Monkey2{
+            inventory: VecDeque::new(),
+            operation: OperationType::Plus,
+            argument0: ArgumentType::Old,
+            argument1: ArgumentType::Old,
+            argument0_int: BigInt::from_bytes_be(Sign::Minus, b"1"),
+            argument1_int: BigInt::from_bytes_be(Sign::Minus, b"1"),
+            test_divisible_by: BigInt::from_bytes_be(Sign::Minus, b"1"),
+            true_destination: 0,
+            false_destination: 0,
+        };
+        if !monkey_line.is_match(&lines[index]) {
+            eprintln!("Expected monkey line at line {}", index);
+            break;
+        }
+        index += 1;
+        monkey.inventory.push_back(BigInt::parse_bytes(starting_line.captures(&lines[index]).unwrap().get(1).unwrap().as_str().as_bytes(), 10).unwrap());
+        if starting_line.captures(&lines[index]).unwrap().get(3).is_some() {
+            //println!("{}", starting_line.captures(&lines[index]).unwrap().get(2).unwrap().as_str());
+            for each_item in starting_line.captures(&lines[index]).unwrap().get(2).unwrap().as_str().split(", ") {
+                if each_item.trim() != "" {
+                    monkey.inventory.push_back(BigInt::parse_bytes(each_item.as_bytes(), 10).unwrap());
+                }
+            }
+        }
+        index +=1;
+        let operation_captures = operation_line.captures(&lines[index]).unwrap();
+        monkey.operation = match operation_captures.get(2).unwrap().as_str() {
+            "+" => OperationType::Plus,
+            "-" => OperationType::Subtract,
+            "*" => OperationType::Times,
+            "/" => OperationType::Divide,
+            _   => OperationType::Plus,
+        };
+        monkey.argument0 = match operation_captures.get(1).unwrap().as_str() {
+            "new" => ArgumentType::New,
+            "old" => ArgumentType::Old,
+            _     => ArgumentType::Int,
+        };
+        if monkey.argument0 == ArgumentType::Int {
+            monkey.argument0_int = BigInt::parse_bytes(operation_captures.get(1).unwrap().as_str().as_bytes(), 10).unwrap();
+        }
+        monkey.argument1 = match operation_captures.get(3).unwrap().as_str() {
+            "new" => ArgumentType::New,
+            "old" => ArgumentType::Old,
+            _     => ArgumentType::Int,
+        };
+        if monkey.argument1 == ArgumentType::Int {
+            monkey.argument1_int = BigInt::parse_bytes(operation_captures.get(3).unwrap().as_str().as_bytes(), 10).unwrap();
+        }
+        index += 1;
+        monkey.test_divisible_by = BigInt::parse_bytes(test_line.captures(&lines[index]).unwrap().get(1).unwrap().as_str().as_bytes(), 10).unwrap();
+        index += 1;
+        monkey.true_destination = usize::from_str(true_line.captures(&lines[index]).unwrap().get(1).unwrap().as_str()).unwrap();
+        index += 1;
+        monkey.false_destination = usize::from_str(false_line.captures(&lines[index]).unwrap().get(1).unwrap().as_str()).unwrap();
+        // skip the blank line between monkeys
+        monkeys.push(monkey);
+        index += 2;
+    }
+    monkeys
+}
+
+fn process_lines(lines: &Vec<String>) -> i128 {
     /*
     Determines the level of monkey business after 20 rounds of simulation. Each
     monkey starts with a certain number of items. The items only have a single
@@ -192,7 +282,7 @@ fn process_lines(lines: &Vec<String>) -> i32 {
 
     See Part 1 of https://adventofcode.com/2022/day/11
     */
-    let mut times_inspected_items: Vec<i32> = Vec::new();
+    let mut times_inspected_items: Vec<i128> = Vec::new();
     // initialize the list of monkeys using the challenge input
     let mut monkeys: Vec<Monkey> = parse_lines(&lines);
     for _ in 0..monkeys.len() {
@@ -205,11 +295,11 @@ fn process_lines(lines: &Vec<String>) -> i32 {
         for monkey_index in 0..monkeys.len() {
             //println!("Simulating Monkey {}", monkey_index);
             while monkeys[monkey_index].inventory.len() > 0 {
-                let mut worry_level: i32 = monkeys[monkey_index].inventory.pop_front().unwrap();
+                let mut worry_level: i128 = monkeys[monkey_index].inventory.pop_front().unwrap();
                 times_inspected_items[monkey_index] += 1;
                 // apply operation to worry level
-                let argument_0: i32;
-                let argument_1: i32;
+                let argument_0: i128;
+                let argument_1: i128;
                 if monkeys[monkey_index].argument0 == ArgumentType::Old {
                     argument_0 = worry_level;
                 }else {
@@ -227,10 +317,75 @@ fn process_lines(lines: &Vec<String>) -> i32 {
                     OperationType::Divide => argument_0 / argument_1,
                 };
                 // worry level divides by three after inspection and before testing
-                worry_level = (f64::from(worry_level) / 3.0).floor() as i32;
+                worry_level = (f64::from(worry_level as i32) / 3.0).floor() as i128;
                 // apply the monkey test to figure out which monkey to send the value to
                 let destination: usize;
                 if worry_level % monkeys[monkey_index].test_divisible_by == 0 {
+                    destination = monkeys[monkey_index].true_destination as usize;
+                }else {
+                    destination = monkeys[monkey_index].false_destination as usize;
+                }
+                // send the item to that monkey
+                monkeys[destination].inventory.push_back(worry_level);
+            }
+        }
+    }
+
+    times_inspected_items.sort();
+    times_inspected_items.reverse();
+    times_inspected_items[0] * times_inspected_items[1]
+}
+
+fn process_lines2(lines: &Vec<String>) -> i128 {
+    /*
+    The same as process_lines(), except the worry level never gets divided by
+    3, and we simulate for 10000 rounds instead of 20 rounds.
+
+    See Part 2 of https://adventofcode.com/2022/day/11
+    */
+    let mut times_inspected_items: Vec<i128> = Vec::new();
+    // initialize the list of monkeys using the challenge input
+    let mut monkeys: Vec<Monkey2> = parse_lines2(&lines);
+    for _ in 0..monkeys.len() {
+        times_inspected_items.push(0);
+    }
+
+    // simulate 10000 rounds of monkey business
+    for round in 0..10000 {
+        //println!("Round: {}", round);
+        for monkey_index in 0..monkeys.len() {
+            //println!("Simulating Monkey {}", monkey_index);
+            while monkeys[monkey_index].inventory.len() > 0 {
+                let mut worry_level: BigInt = monkeys[monkey_index].inventory.pop_front().unwrap();
+                times_inspected_items[monkey_index] += 1;
+                // apply operation to worry level
+                let argument_0: BigInt;
+                let argument_1: BigInt;
+                if monkeys[monkey_index].argument0 == ArgumentType::Old {
+                    argument_0 = worry_level;
+                }else {
+                    argument_0 = monkeys[monkey_index].argument0_int;
+                }
+                if monkeys[monkey_index].argument1 == ArgumentType::Old {
+                    argument_1 = worry_level;
+                }else {
+                    argument_1 = monkeys[monkey_index].argument1_int;
+                }
+                worry_level = match monkeys[monkey_index].operation {
+                    OperationType::Plus => argument_0 + argument_1,
+                    OperationType::Subtract => argument_0 - argument_1,
+                    OperationType::Times => {
+                        if argument_0.checked_mul(&argument_1).is_none() {
+                            println!("Trying to multiply {} by {}", argument_0, argument_1);
+                        }
+                        argument_0.checked_mul(&argument_1).unwrap_or_default()
+                    },
+                    OperationType::Divide => argument_0 / argument_1,
+                };
+                // we no longer divide the worry level by three
+                // apply the monkey test to figure out which monkey to send the value to
+                let destination: usize;
+                if worry_level % monkeys[monkey_index].test_divisible_by == BigInt::parse_bytes("0".as_bytes(), 10).unwrap() {
                     destination = monkeys[monkey_index].true_destination as usize;
                 }else {
                     destination = monkeys[monkey_index].false_destination as usize;
@@ -261,10 +416,23 @@ mod tests {
         let lines = read_lines("day11_input.txt");
         assert_eq!(process_lines(&lines), 108240);
     }
+
+    #[test]
+    fn test_process_lines2_short() {
+        let lines = read_lines("day11_input_short.txt");
+        assert_eq!(process_lines2(&lines), 2713310158);
+    }
+
+    #[test]
+    fn test_process_lines2_full() {
+        let lines = read_lines("day11_input.txt");
+        assert_eq!(process_lines2(&lines), -1);
+    }
 }
 
 pub fn main() {
     let result = read_lines("day11_input_short.txt");
     println!("Day 11:");
     println!("Part 1 - The level of monkey business after 20 rounds of stuff-slinging simian shenanigans is: {}", process_lines(&result));
+    println!("Part 2 - The level of monkey business after 10000 rounds of stuff-slinging simian shenanigans is: {}", process_lines2(&result));
 }
