@@ -290,7 +290,7 @@ fn process_lines(lines: &Vec<String>) -> i128 {
     }
 
     // simulate 20 rounds of monkey business
-    for round in 0..20 {
+    for _round in 0..20 {
         //println!("Round: {}", round);
         for monkey_index in 0..monkeys.len() {
             //println!("Simulating Monkey {}", monkey_index);
@@ -352,7 +352,7 @@ fn process_lines2(lines: &Vec<String>) -> i128 {
 
     // simulate 10000 rounds of monkey business
     for round in 0..10000 {
-        //println!("Round: {}", round);
+        println!("Round: {}", round);
         for monkey_index in 0..monkeys.len() {
             //println!("Simulating Monkey {}", monkey_index);
             while monkeys[monkey_index].inventory.len() > 0 {
@@ -362,14 +362,14 @@ fn process_lines2(lines: &Vec<String>) -> i128 {
                 let argument_0: BigInt;
                 let argument_1: BigInt;
                 if monkeys[monkey_index].argument0 == ArgumentType::Old {
-                    argument_0 = worry_level;
+                    argument_0 = worry_level.clone();
                 }else {
-                    argument_0 = monkeys[monkey_index].argument0_int;
+                    argument_0 = monkeys[monkey_index].argument0_int.clone();
                 }
                 if monkeys[monkey_index].argument1 == ArgumentType::Old {
-                    argument_1 = worry_level;
+                    argument_1 = worry_level.clone();
                 }else {
-                    argument_1 = monkeys[monkey_index].argument1_int;
+                    argument_1 = monkeys[monkey_index].argument1_int.clone();
                 }
                 worry_level = match monkeys[monkey_index].operation {
                     OperationType::Plus => argument_0 + argument_1,
@@ -385,7 +385,7 @@ fn process_lines2(lines: &Vec<String>) -> i128 {
                 // we no longer divide the worry level by three
                 // apply the monkey test to figure out which monkey to send the value to
                 let destination: usize;
-                if worry_level % monkeys[monkey_index].test_divisible_by == BigInt::parse_bytes("0".as_bytes(), 10).unwrap() {
+                if &worry_level % monkeys[monkey_index].test_divisible_by.clone() == BigInt::parse_bytes("0".as_bytes(), 10).unwrap() {
                     destination = monkeys[monkey_index].true_destination as usize;
                 }else {
                     destination = monkeys[monkey_index].false_destination as usize;
