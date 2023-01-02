@@ -336,6 +336,26 @@ fn process_lines(lines: &Vec<String>) -> i128 {
     times_inspected_items[0] * times_inspected_items[1]
 }
 
+fn my_lcm(mut divisors: Vec<BigInt>) -> BigInt {
+    divisors.sort();
+    let mut multiplicand: BigInt = BigInt::parse_bytes("1".as_bytes(), 10).unwrap();
+    let mut all_matched: bool;
+    loop {
+        all_matched = true;
+        for index in 1..divisors.len() {
+            if (&divisors[0] * &multiplicand) % &divisors[index] != BigInt::parse_bytes("0".as_bytes(), 10).unwrap() {
+                all_matched = false;
+                break;
+            }
+        }
+        if all_matched {
+            break;
+        }
+        multiplicand += BigInt::parse_bytes("1".as_bytes(), 10).unwrap();
+    }
+    &divisors[0] * multiplicand
+}
+
 fn process_lines2(lines: &Vec<String>) -> i128 {
     /*
     The same as process_lines(), except the worry level never gets divided by
@@ -344,15 +364,25 @@ fn process_lines2(lines: &Vec<String>) -> i128 {
     See Part 2 of https://adventofcode.com/2022/day/11
     */
     let mut times_inspected_items: Vec<i128> = Vec::new();
+    let mut divisors: Vec<BigInt> = Vec::new();
+    let modulus_limit: BigInt;
     // initialize the list of monkeys using the challenge input
     let mut monkeys: Vec<Monkey2> = parse_lines2(&lines);
-    for _ in 0..monkeys.len() {
+    for index in 0..monkeys.len() {
         times_inspected_items.push(0);
+        divisors.push(monkeys[index].test_divisible_by.clone());
     }
 
+    // if we just let the worry level grow unrestricted, we'll end up with 
+    // numbers on the order of 10^10_000. But we don't need to know the worry
+    // levels, we just need to know which divisibility tests they satisfy. We 
+    // can do this by finding the least common multiple of all the divisors, 
+    // and taking the modulus of the worry level and that LCM.
+    modulus_limit = my_lcm(divisors);
+    println!("Modulus limit is: {}", modulus_limit);
+
     // simulate 10000 rounds of monkey business
-    for round in 0..10000 {
-        println!("Round: {}", round);
+    for _round in 0..10000 {
         for monkey_index in 0..monkeys.len() {
             //println!("Simulating Monkey {}", monkey_index);
             while monkeys[monkey_index].inventory.len() > 0 {
@@ -375,14 +405,14 @@ fn process_lines2(lines: &Vec<String>) -> i128 {
                     OperationType::Plus => argument_0 + argument_1,
                     OperationType::Subtract => argument_0 - argument_1,
                     OperationType::Times => {
-                        if argument_0.checked_mul(&argument_1).is_none() {
-                            println!("Trying to multiply {} by {}", argument_0, argument_1);
-                        }
-                        argument_0.checked_mul(&argument_1).unwrap_or_default()
+                        argument_0 * argument_1
                     },
                     OperationType::Divide => argument_0 / argument_1,
                 };
                 // we no longer divide the worry level by three
+                // but we can keep the worry levels from going to the 10,000th 
+                // power by using our modulus_limit value
+                worry_level = worry_level % &modulus_limit;
                 // apply the monkey test to figure out which monkey to send the value to
                 let destination: usize;
                 if &worry_level % monkeys[monkey_index].test_divisible_by.clone() == BigInt::parse_bytes("0".as_bytes(), 10).unwrap() {
@@ -426,12 +456,12 @@ mod tests {
     #[test]
     fn test_process_lines2_full() {
         let lines = read_lines("day11_input.txt");
-        assert_eq!(process_lines2(&lines), -1);
+        assert_eq!(process_lines2(&lines), 25712998901);
     }
 }
 
 pub fn main() {
-    let result = read_lines("day11_input_short.txt");
+    let result = read_lines("day11_input.txt");
     println!("Day 11:");
     println!("Part 1 - The level of monkey business after 20 rounds of stuff-slinging simian shenanigans is: {}", process_lines(&result));
     println!("Part 2 - The level of monkey business after 10000 rounds of stuff-slinging simian shenanigans is: {}", process_lines2(&result));
