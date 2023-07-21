@@ -15,7 +15,7 @@ fn read_lines(filename: &str) -> Vec<String> {
     lines
 }
 
-fn parse_input(mut lines: Vec<String>) -> (Vec<Vec<char>>, (usize, usize), (usize, usize)) {
+fn parse_input(lines: Vec<String>) -> (Vec<Vec<char>>, (usize, usize), (usize, usize)) {
     /*
     Takes the raw input, recording the locations of 'S' and 'E', the starting
     and ending locations, respectively. Returns these locations as well as a 2D
@@ -41,7 +41,7 @@ fn parse_input(mut lines: Vec<String>) -> (Vec<Vec<char>>, (usize, usize), (usiz
 }
 
 fn get_generic_height(raw_height: char) -> char {
-    match (raw_height) {
+    match raw_height {
         'S' => 'a',
         'E' => 'z',
         _ => raw_height
@@ -59,7 +59,7 @@ fn get_neighbors(current_node: (usize, usize), height_map: Vec<Vec<char>>) -> Ve
     // left neighbor
     if (current_node.0 as i32) - 1 >= 0 {
         target_height = get_generic_height(height_map[current_node.1][current_node.0 - 1]);
-        if target_height as usize <= height as usize {
+        if target_height as usize <= height as usize + 1 {
             neighbors.push((current_node.0 - 1, current_node.1));
         }
     }
@@ -95,8 +95,6 @@ fn breadth_first_search(height_map: Vec<Vec<char>>, starting_location: (usize, u
     let mut distance_table: HashMap<(usize, usize), i32> = HashMap::new();
     let mut found: bool = false;
 
-    let starting_node: (usize, usize) = (starting_location.0, starting_location.1);
-
     // initialize our distance table
     for y in 0..height_map.len() {
         for x in 0..height_map[y].len() {
@@ -115,7 +113,7 @@ fn breadth_first_search(height_map: Vec<Vec<char>>, starting_location: (usize, u
     node_queue.push_back((starting_location.0, starting_location.1)); 
 
     while node_queue.len() > 0 && found == false {
-        let mut this_node: (usize, usize) = node_queue.pop_front().unwrap();
+        let this_node: (usize, usize) = node_queue.pop_front().unwrap();
         visited_nodes.insert(this_node.clone());
         for each_neighbor in get_neighbors(this_node, height_map.clone()) {
             // update distance in distance table
@@ -127,7 +125,7 @@ fn breadth_first_search(height_map: Vec<Vec<char>>, starting_location: (usize, u
                 next_layer_node_queue.push_back(each_neighbor.clone());
             }
             // if this neighbor is the goal_location, stop searching
-            if height_map[each_neighbor.1][each_neighbor.0] == 'E' {
+            if each_neighbor.0 == goal_location.0 && each_neighbor.1 == goal_location.1 {
                 shortest_path_length += 1;
                 found = true;
                 break
@@ -156,8 +154,8 @@ fn process_lines(lines: &Vec<String>) -> i32 {
 
     See Part 1 of https://adventofcode.com/2022/day/12
     */
-    let mut height_map: Vec<Vec<char>> = Vec::new();
-    let mut shortest_path_length: i32 = i32::max_value();
+    let height_map: Vec<Vec<char>>;
+    let shortest_path_length: i32;
     let starting_location: (usize, usize);
     let goal_location: (usize, usize);
 
@@ -181,7 +179,7 @@ mod tests {
     #[test]
     fn test_process_lines_full() {
         let lines = read_lines("day12_input.txt");
-        assert_eq!(process_lines(&lines), -1);
+        assert_eq!(process_lines(&lines), 447);
     }
 
     #[test]
@@ -243,6 +241,20 @@ mod tests {
         assert_eq!(neighbors[1], (6, 2));
         assert_eq!(neighbors[2], (5, 1));
         assert_eq!(neighbors[3], (5, 3));
+    }
+
+    #[test]
+    fn test_get_neighbors_04() {
+        let height_map: Vec<Vec<char>> = vec![vec!['S', 'b', 'b', 'q', 'p', 'o', 'n', 'm'],
+                                            vec!['a', 'b', 'c', 'r', 'y', 'x', 'x', 'l'],
+                                            vec!['a', 'c', 'c', 's', 'z', 'E', 'x', 'k'],
+                                            vec!['a', 'c', 'c', 't', 'u', 'v', 'w', 'j'],
+                                            vec!['a', 'b', 'd', 'e', 'f', 'g', 'h', 'i']];
+        let neighbors: Vec<(usize, usize)> = get_neighbors((5, 1), height_map);
+        assert_eq!(neighbors.len(), 3);
+        assert_eq!(neighbors[0], (4, 1));
+        assert_eq!(neighbors[1], (6, 1));
+        assert_eq!(neighbors[2], (5, 0));
     }
 
     #[test]
