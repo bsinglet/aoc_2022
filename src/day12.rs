@@ -1,24 +1,5 @@
 use std::fs;
-use std::collections::VecDeque;
-
-#[derive(Debug)]
-#[derive(Clone)]
-pub struct Node {
-    x: i32,
-    y: i32,
-    distance: i32,
-    parent: (i32, i32),
-}
-
-impl PartialEq for Node {
-    fn eq(&self, other: &Self) -> bool {
-        self.x == other.x && self.y == other.y
-    }
-
-    fn ne(&self, other: &Self) -> bool {
-        self.x != other.x || self.y != other.y
-    }
-}
+use std::collections::{VecDeque, HashMap, HashSet};
 
 fn read_lines(filename: &str) -> Vec<String> {
     /*
@@ -34,156 +15,90 @@ fn read_lines(filename: &str) -> Vec<String> {
     lines
 }
 
-fn parse_input(mut lines: Vec<String>) -> (Vec<Vec<i32>>, (i32, i32), (i32, i32)) {
+fn parse_input(mut lines: Vec<String>) -> (Vec<Vec<char>>, (usize, usize), (usize, usize)) {
     /*
     Takes the raw input, recording the locations of 'S' and 'E', the starting
     and ending locations, respectively. Returns these locations as well as a 2D
     Vec heightmap. 
     */
-    let mut height_map: Vec<Vec<i32>> = Vec::new();
-    let mut starting_location: (i32, i32) = (-1, -1);
-    let mut goal_location: (i32, i32) = (-1, -1);
+    let mut height_map: Vec<Vec<char>> = Vec::new();
+    let mut starting_location: (usize, usize) = (usize::MAX, usize::MAX);
+    let mut goal_location: (usize, usize) = (usize::MAX, usize::MAX);
 
     for line_index in 0..lines.len() {
         height_map.push(Vec::new());
         if lines[line_index].contains('S') {
-            starting_location = (lines[line_index].find('S').unwrap() as i32, (height_map.len() - 1) as i32);
-            lines[line_index] = lines[line_index].replace('S', "a");
+            starting_location = (lines[line_index].find('S').unwrap() as usize, (height_map.len() - 1) as usize);
         }
         if lines[line_index].contains('E') {
-            goal_location = (lines[line_index].find('E').unwrap() as i32, (height_map.len() - 1) as i32);
-            lines[line_index] = lines[line_index].replace('E', "z");
+            goal_location = (lines[line_index].find('E').unwrap() as usize, (height_map.len() - 1) as usize);
         }
-        height_map[line_index] = lines[line_index].chars().map(|x| ((x as u32) - ('a' as u32)) as i32).collect();
     }
 
     (height_map, starting_location, goal_location)
 }
 
-fn heuristic_function(starting_location: (i32, i32), starting_height: i32, 
-    goal_location: (i32, i32), goal_height: i32,) -> i32 {
-    /*
-    Gives an estimated distance between two points on a grid.
-    */
-    let mut distance: i32 = (starting_location.0 - goal_location.0).abs() 
-        + (starting_location.1 - goal_location.1).abs();
-    // difference in height is an important factor, but this is a pretty naive 
-    // way to handle it...
-    distance += goal_height - starting_height;
-    distance
-}
-
-fn get_neighbors(current_node: Node, height_map: Vec<Vec<i32>>) -> Vec<(i32, i32)> {
+fn get_neighbors(current_node: (usize, usize), height_map: Vec<Vec<char>>) -> Vec<(usize, usize)> {
     /*
     Get the list of locations you can step up to or down to from the current
     node.
     */
-    let mut neighbors: Vec<(i32, i32)> = Vec::new();
-    let height: i32 = height_map[current_node.y as usize][current_node.x as usize];
-    let mut target_height: i32; 
-    if current_node.x - 1 > 0 {
-        target_height = height_map[current_node.y as usize][current_node.x as usize - 1];
-        if target_height <= height + 1 {
-            neighbors.push((current_node.x - 1, current_node.y));
+    let mut neighbors: Vec<(usize, usize)> = Vec::new();
+    let height: char = height_map[current_node.1 as usize][current_node.0 as usize];
+    let mut target_height: char; 
+    if current_node.0 - 1 > 0 {
+        target_height = height_map[current_node.1 as usize][current_node.0 as usize - 1];
+        if target_height as usize <= height as usize {
+            neighbors.push((current_node.0 - 1, current_node.1));
         }
     }
-    if current_node.x + 1 < height_map[current_node.y as usize].len() as i32 {
-        target_height = height_map[current_node.y as usize][current_node.x as usize + 1];
-        if target_height <= height + 1 {
-            neighbors.push((current_node.x + 1, current_node.y));
+    if current_node.0 + 1 < height_map[current_node.1 as usize].len() {
+        target_height = height_map[current_node.1 as usize][current_node.0 as usize + 1];
+        if target_height as usize <= (height as usize) + 1 {
+            neighbors.push((current_node.0 + 1, current_node.1));
         }
     }
-    if current_node.y - 1 > 0 {
-        target_height = height_map[current_node.y as usize - 1][current_node.x as usize];
-        if target_height <= height + 1 {
-            neighbors.push((current_node.x, current_node.y - 1));
+    if current_node.1 - 1 > 0 {
+        target_height = height_map[current_node.1 as usize - 1][current_node.0 as usize];
+        if target_height as usize <= (height as usize) + 1 {
+            neighbors.push((current_node.0, current_node.1 - 1));
         }
     }
-    if current_node.y + 1 < height_map.len() as i32 {
-        target_height = height_map[current_node.y as usize + 1][current_node.x as usize];
-        if target_height <= height + 1 {
-            neighbors.push((current_node.x, current_node.y + 1));
+    if current_node.1 + 1 < height_map.len() {
+        target_height = height_map[current_node.1 as usize + 1][current_node.0 as usize];
+        if target_height as usize <= (height as usize) + 1 {
+            neighbors.push((current_node.0, current_node.1 + 1));
         }
     }
 
     neighbors
 }
 
-fn get_index(each_neighbor: (i32, i32), unvisited_nodes: VecDeque<Node>) -> i32 {
-    /* 
-    Find the index in a VecDequeue of Nodes matching a coordinate pair.
-    Returns -1 if it's not present.
-    */
-    let mut located_index: i32 = -1;
-    for index in 0..unvisited_nodes.len() {
-        if unvisited_nodes[index].x == each_neighbor.0 && unvisited_nodes[index].y == each_neighbor.1 {
-            located_index = index as i32;
-            break;
-        }
-    }
 
-    located_index
-}
-
-fn dijkstra_search(height_map: Vec<Vec<i32>>, starting_location: (i32, i32), goal_location: (i32, i32)) -> i32 {
-    let mut shortest_path_length: i32 = i32::max_value();
+fn breadth_first_search(height_map: Vec<Vec<char>>, starting_location: (usize, usize), goal_location: (usize, usize)) -> i32 {
     /*
-    Attempting to adapt Dijkstra's algorithm to the parameters of this
-    challenge.
+    Exploiting the fact that this map is an unweighted graph, a simple breadth-first search is the best way to find the optimal path.
     */
-    let mut unvisited_nodes: VecDeque<(Node)> = VecDeque::new();
-    let mut starting_node: Node = Node{
-        x: starting_location.0,
-        y: starting_location.1,
-        distance: 0,
-        parent: (-1, -1),
-    };
+    let mut shortest_path_length: i32 = 0;
+    let mut visited_nodes: HashSet<(usize, usize)> = HashSet::new();
+    let mut distance_table: HashMap<(usize, usize), i32> = HashMap::new();
 
-    // initialize all the nodes
+    let starting_node: (usize, usize) = (starting_location.0, starting_location.1);
+
+    // initialize our distance table
     for y in 0..height_map.len() {
         for x in 0..height_map[y].len() {
-            // starting location goes at the front of the unvisited nodes list
-            if x as i32 == starting_location.0 && y as i32 == starting_location.1 {
-                unvisited_nodes.push_front(starting_node);
-                continue;
+            // set distance to 0 for starting_location, everything else set to i32::max 
+            if x == starting_location.0 && y == starting_location.1 {
+                distance_table.insert((x, y), 0);                
+            }else {
+                distance_table.insert((x, y), i32::MAX);
             }
-
-            unvisited_nodes.push_back(Node{
-                x: x as i32,
-                y: y as i32,
-                distance: i32::max_value(),
-                parent: (-1, -1),
-            });
         }
     }
 
-    // the list of unvisited nodes should always be sorted by distance. At this
-    // point, though, that just means the starting node is at the front, and
-    // all other nodes follow in an arbitrary order.
-    
-    // visit each node in the queue, determining distance from the starting location
-    while unvisited_nodes.len() > 0 {
-        let current_node = unvisited_nodes.pop_front().unwrap();
 
-        for each_neighbor in get_neighbors(current_node.clone(), height_map.clone()) {
-            let neighbor_index: i32 = get_index(each_neighbor, unvisited_nodes.clone());
-            if neighbor_index == -1 {
-                continue;
-            }
 
-            // evaluate this neighbor
-            let alternative_distance: i32 = current_node.distance + 1;
-            if alternative_distance < unvisited_nodes[neighbor_index as usize].distance {
-                unvisited_nodes[neighbor_index as usize].distance = alternative_distance;
-                unvisited_nodes[neighbor_index as usize].parent = (current_node.x, current_node.y);
-            }
-        }
-
-        // re-sort unvisited nodes so it's still in ascending order of distances.
-        let mut temporary_list: Vec<Node> = unvisited_nodes.clone().into_iter().collect::<Vec<Node>>();
-        temporary_list.sort_by_key(|x| x.distance);
-        unvisited_nodes = temporary_list.into_iter().collect();
-    }
 
 
     shortest_path_length
@@ -200,14 +115,14 @@ fn process_lines(lines: &Vec<String>) -> i32 {
 
     See Part 1 of https://adventofcode.com/2022/day/12
     */
-    let mut height_map: Vec<Vec<i32>> = Vec::new();
+    let mut height_map: Vec<Vec<char>> = Vec::new();
     let mut shortest_path_length: i32 = i32::max_value();
-    let starting_location: (i32, i32);
-    let goal_location: (i32, i32);
+    let starting_location: (usize, usize);
+    let goal_location: (usize, usize);
 
     (height_map, starting_location, goal_location) = parse_input(lines.clone());
 
-    shortest_path_length = dijkstra_search(height_map, starting_location, goal_location);
+    shortest_path_length = breadth_first_search(height_map, starting_location, goal_location);
     
     shortest_path_length
 }
@@ -234,17 +149,17 @@ mod tests {
         // correctly finds the starting and ending locations, as well as the
         // heights of each square.
         let lines = read_lines("day12_input_short.txt");
-        let height_map: Vec<Vec<i32>>;
-        let starting_location: (i32, i32);
-        let goal_location: (i32, i32);
+        let height_map: Vec<Vec<char>>;
+        let starting_location: (usize, usize);
+        let goal_location: (usize, usize);
         (height_map, starting_location, goal_location) = parse_input(lines);
         assert_eq!(starting_location, (0, 0));
         assert_eq!(goal_location, (5, 2));
-        assert_eq!(height_map, vec![vec![0, 0, 1, 16, 15, 14, 13, 12], 
-                                    vec![0, 1, 2, 17, 24, 23, 23, 11], 
-                                    vec![0, 2, 2, 18, 25, 25, 23, 10], 
-                                    vec![0, 2, 2, 19, 20, 21, 22, 9], 
-                                    vec![0, 1, 3, 4, 5, 6, 7, 8]]);
+        assert_eq!(height_map, vec![vec!['S', 'a', 'b', 'q', 'p', 'o', 'n', 'm'],
+                                    vec!['a', 'b', 'c', 'r', 'y', 'x', 'x', 'l'],
+                                    vec!['a', 'c', 'c', 's', 'z', 'E', 'x', 'k'],
+                                    vec!['a', 'c', 'c', 't', 'u', 'v', 'w', 'j'],
+                                    vec!['a', 'b', 'd', 'e', 'f', 'g', 'h', 'i']]);
     }
 }
 
