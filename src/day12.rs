@@ -140,7 +140,10 @@ fn breadth_first_search(height_map: Vec<Vec<char>>, starting_location: (usize, u
         }
     }
 
-    shortest_path_length
+    match found {
+        true => shortest_path_length,
+        false => -1,
+    }
 }
 
 fn process_lines(lines: &Vec<String>) -> i32 {
@@ -166,6 +169,35 @@ fn process_lines(lines: &Vec<String>) -> i32 {
     shortest_path_length
 }
 
+fn process_lines2(lines: &Vec<String>) -> i32 {
+    /*
+    Same as part 1, except we don't have to start at 'S'. Instead, we need to
+    check each 'a' height and see which one has the shortest path to 'E'. That
+    path length is the return value
+    
+    See Part 2 of https://adventofcode.com/2022/day/12
+    */
+    let height_map: Vec<Vec<char>>;
+    let mut path_lengths: Vec<i32> = Vec::<i32>::new();
+    let goal_location: (usize, usize);
+
+    (height_map, _, goal_location) = parse_input(lines.clone());
+
+    for y in 0..height_map.len() {
+        for x in 0..height_map[y].len() {
+            if height_map[y][x] == 'S' || height_map[y][x] == 'a' {
+                path_lengths.push(breadth_first_search(height_map.clone(), (x, y), goal_location));
+            }
+        }
+    }
+    
+    // we want the shortest path, so sort in ascending order
+    path_lengths.sort();
+    // we need to filter out any dead-ends, so path lengths of -1 are invalid
+    path_lengths = path_lengths.into_iter().filter(|x| x > &-1).collect();
+    path_lengths[0]
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -180,6 +212,18 @@ mod tests {
     fn test_process_lines_full() {
         let lines = read_lines("day12_input.txt");
         assert_eq!(process_lines(&lines), 447);
+    }
+
+    #[test]
+    fn test_process_lines2_short() {
+        let lines = read_lines("day12_input_short.txt");
+        assert_eq!(process_lines2(&lines), 29);
+    }
+
+    #[test]
+    fn test_process_lines2_full() {
+        let lines = read_lines("day12_input.txt");
+        assert_eq!(process_lines2(&lines), 446);
     }
 
     #[test]
@@ -270,4 +314,5 @@ pub fn main() {
     let result = read_lines("day12_input_short.txt");
     println!("Day 12:");
     println!("Part 1 - The fewest number of steps required is: {}", process_lines(&result));
+    println!("Part 2 - The fewest number of steps required is: {}", process_lines2(&result));
 }
