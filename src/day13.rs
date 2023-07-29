@@ -8,17 +8,17 @@ enum PacketElement {
 }
 
 fn print_packet_element(packet: PacketElement) -> String {
-    let mut output: String = "".to_string();
+    let mut output: String;
     match packet {
         PacketElement::Number(num) => {
-            println!("Returning {}", num);
+            //println!("Returning {}", num);
             output = num.to_string();
         },
         PacketElement::List(list) => {
             let mut elements: Vec<String> = Vec::<String>::new();
-            println!("Length of list is {}", list.len());
+            //println!("Length of list is {}", list.len());
             for each_element in list {
-                println!("Looking at list element");
+                //println!("Looking at list element");
                 elements.push(print_packet_element(each_element));
             }
             output = elements.join(",");
@@ -191,7 +191,7 @@ mod tests {
     #[test]
     fn test_packet_element_enum_01() {
         let sub_list: PacketElement = PacketElement::List(vec![PacketElement::Number(2)]);
-        if let PacketElement::List(my_list) = sub_list {
+        if let PacketElement::List(ref my_list) = sub_list {
             if let PacketElement::Number(my_val) = my_list[0] {
                 println!("sub_list[0]: {}", my_val);
                 assert_eq!(my_val, 2);
@@ -228,7 +228,7 @@ mod tests {
         let a_list: PacketElement = PacketElement::List(vec![PacketElement::Number(2)]);
         let sub_list: PacketElement = PacketElement::List(vec![a_list.clone()]);
         if let PacketElement::List(my_list) = sub_list.clone() {
-            if let PacketElement::List(my_sub_list) = my_list[0] {
+            if let PacketElement::List(ref my_sub_list) = my_list[0] {
                 if let PacketElement::Number(my_val) = my_sub_list[0] {
                     println!("sub_list[0]: {}", my_val);
                     val = my_val;
@@ -236,30 +236,40 @@ mod tests {
             }
         }
         assert_eq!(val, 2);
+        assert_eq!(print_packet_element(sub_list), "[[2]]".to_string());
     }
 
     #[test]
     fn test_parse_packet_01() {
         let x: PacketElement = parse_packet("[]".to_string());
-        if let PacketElement::List(my_list) = x {
+        if let PacketElement::List(ref my_list) = x {
             assert_eq!(my_list.len(), 0);
+        }else {
+            assert!(false);
         }
+        assert_eq!(print_packet_element(x), "[]".to_string());
     }
 
     #[test]
     fn test_parse_packet_2() {
         let x: PacketElement = parse_packet("[[]]".to_string());
-        if let PacketElement::List(my_list) = x {
+        if let PacketElement::List(ref my_list) = x {
             assert_eq!(my_list.len(), 1);
+        }else {
+            assert!(false);
         }
+        assert_eq!(print_packet_element(x), "[[]]".to_string());
     }
 
     #[test]
     fn test_parse_packet_03() {
         let x: PacketElement = parse_packet("[[1]]".to_string());
-        if let PacketElement::List(my_list) = x {
+        if let PacketElement::List(ref my_list) = x {
             assert_eq!(my_list.len(), 1);
+        }else {
+            assert!(false);
         }
+        assert_eq!(print_packet_element(x), "[[1]]".to_string());
     }
 
     #[test]
@@ -280,7 +290,6 @@ mod tests {
         let right_packet = parse_packet("[[1],4]".to_string());
         assert_eq!(recursive_compare(left_packet, right_packet), 1);
     }
-    */
 
     #[test]
     fn test_print_packet_element_01() {
