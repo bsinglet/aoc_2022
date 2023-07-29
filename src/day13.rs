@@ -185,7 +185,7 @@ fn process_lines2(lines: &Vec<String>) -> i32 {
     // bubble sort them
     loop {
         swapped = false;
-        for index in 0..lines.len() {
+        for index in 0..packet_vec.len()-1 {
             if recursive_compare(packet_vec[index].clone(), packet_vec[index+1].clone()) == -1 {
                 // swap index and index + 1
                 let temp: PacketElement = packet_vec[index].clone();
@@ -193,6 +193,8 @@ fn process_lines2(lines: &Vec<String>) -> i32 {
                 packet_vec[index+1] = temp.clone();
                 swapped = true;
                 break;
+            }else {
+                //println!("Not swapping {} and {}", print_packet_element(packet_vec[index].clone()), print_packet_element(packet_vec[index+1].clone()));
             }
         }
         if !swapped {
@@ -200,24 +202,14 @@ fn process_lines2(lines: &Vec<String>) -> i32 {
         }
     }
 
-    // get the indices of [[2]] and [[6]]
+    // Get the indices of the divider packets
+    // It would be faster to use a loop and check both values at once, but this
+    // is simpler and easier to troubleshoot
     let index_2: usize = packet_vec.iter().position(|x| print_packet_element(x.clone()) == "[[2]]").unwrap() + 1;
     let index_6: usize = packet_vec.iter().position(|x| print_packet_element(x.clone()) == "[[6]]").unwrap() + 1;
 
     println!("Found [[2]] at index {}", index_2);
     println!("Found [[6]] at index {}", index_6);
-    /*
-    for index in 0..packet_vec.len() {
-        if print_packet_element(packet_vec[index].clone()) == "[[2]]" {
-            index_2 = index + 1;
-            println!("Found [[2]] at index {}", index_2);
-        }
-        if print_packet_element(packet_vec[index].clone()) == "[[6]]" {
-            index_6 = index + 1;
-            println!("Found [[6]] at index {}", index_6);
-        }
-    }
-    */
 
     (index_2 * index_6) as i32
 }
@@ -357,7 +349,26 @@ mod tests {
         // [[1],[2,3,4]] vs [[1],4]
         let left_packet = parse_packet("[[1],[2,3,4]]".to_string());
         let right_packet = parse_packet("[[1],4]".to_string());
-        assert_eq!(recursive_compare(left_packet, right_packet), 1);
+        assert_eq!(recursive_compare(left_packet.clone(), right_packet.clone()), 1);
+        assert_eq!(recursive_compare(right_packet, left_packet), -1);
+    }
+    
+    #[test]
+    fn test_recursive_compare_02() {
+        // [9] vs [[6]]
+        let left_packet = parse_packet("[9]".to_string());
+        let right_packet = parse_packet("[[6]]".to_string());
+        assert_eq!(recursive_compare(left_packet.clone(), right_packet.clone()), -1);
+        assert_eq!(recursive_compare(right_packet, left_packet), 1);
+    }
+
+    #[test]
+    fn test_recursive_compare_03() {
+        // [[6]] vs [7, 7, 7]
+        let left_packet = parse_packet("[[6]]".to_string());
+        let right_packet = parse_packet("[7,7,7]".to_string());
+        assert_eq!(recursive_compare(left_packet.clone(), right_packet.clone()), 1);
+        assert_eq!(recursive_compare(right_packet, left_packet), -1);
     }
 
     #[test]
@@ -370,7 +381,7 @@ mod tests {
 }
 
 pub fn main() {
-    let result = read_lines("day13_input_short.txt");
+    let result = read_lines("day13_input.txt");
     println!("Day 13:");
     println!("Part 1 - The sum of the indices of the pairs in the right order is: {}", process_lines(&result));
     println!("Part 2 - The decoder key is: {}", process_lines2(&result));
