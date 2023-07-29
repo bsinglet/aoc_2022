@@ -8,6 +8,11 @@ enum PacketElement {
 }
 
 fn print_packet_element(packet: PacketElement) -> String {
+    /*
+    Takes a PacketElement enum and recursively converts it into a String. This
+    was essential for testing Part 1, as well as locating the divider packets
+    in the sorted list in Part 2. 
+    */
     let mut output: String;
     match packet {
         PacketElement::Number(num) => {
@@ -44,6 +49,10 @@ fn read_lines(filename: &str) -> Vec<String> {
 
 
 fn trinary_compare(left: i32, right: i32) -> i32 {
+    /*
+    Comparison logic for recursive_compare(). 1 means correctly ordered, -1 is
+    incorrectly ordered, 0 is neutral.
+    */
     let mut return_val: i32 = 0;
     if left < right {
         return_val = 1;
@@ -54,6 +63,9 @@ fn trinary_compare(left: i32, right: i32) -> i32 {
 }
 
 fn minimum(a: usize, b:usize) -> usize {
+    /*
+    Return the smaller of the two parameters.
+    */
     if a < b {
         return a;
     }
@@ -61,19 +73,28 @@ fn minimum(a: usize, b:usize) -> usize {
 }
 
 fn recursive_compare(left: PacketElement, right: PacketElement) -> i32 {
+    /*
+    This function contains the real logic behind the process_lines() and 
+    process_lines2() functions. It recursively compares the two packets based
+    on the rules specified in Day 13, Part 1 (and reused in Part 2).
+    */
     match (left, right) {
+        // if comparing two numbers, left < right.
         (PacketElement::Number(left_int), PacketElement::Number(right_int)) => {
             //println!("Result based on Num vs Num comparison");
             return trinary_compare(left_int, right_int);
-        }
+        },
+        // if left is a list and right is a number, wrap right in a list and then compare again.
         (PacketElement::List(left_list), PacketElement::Number(right_int)) => {
             //println!("Result based on List vs Num comparison");
             return recursive_compare(PacketElement::List(left_list), PacketElement::List(vec![PacketElement::Number(right_int)]));
-        }
+        },
+        // if right is a list and left is a number, wrap left in a list and then compare again.
         (PacketElement::Number(left_int), PacketElement::List(right_list)) => {
             //println!("Result based on Num vs List comparison");
             return recursive_compare(PacketElement::List(vec![PacketElement::Number(left_int)]), PacketElement::List(right_list));
-        }
+        },
+        // when comparing two lists, check each index until you find a pair of elements that are not equal to each other
         (PacketElement::List(left_list), PacketElement::List(right_list)) => {
             for index in 0..minimum(left_list.len(), right_list.len()) {
                 //println!("Checking index {} of {} and {}", index, left_list.len(), right_list.len());
@@ -83,6 +104,8 @@ fn recursive_compare(left: PacketElement, right: PacketElement) -> i32 {
                     return my_result;
                 }
             }
+            // all elements in the two lists were equal to each other, so 
+            // they're in order if the left list is shorter than the right list.
             //println!("Result based on length {} vs {}", left_list.len(), right_list.len());
             return trinary_compare(left_list.len() as i32, right_list.len() as i32);
         }
@@ -91,6 +114,10 @@ fn recursive_compare(left: PacketElement, right: PacketElement) -> i32 {
 
 
 fn parse_packet(raw_packet: String) -> PacketElement {
+    /*
+    Take the string representation of a packet and convert it to a 
+    PacketElement. This function uses recursive calls to simplify this process.
+    */
     //println!("Parsing {}", raw_packet);
     if raw_packet.as_bytes()[0] as char != '[' {
         //println!("parse_packet() called on number {}", raw_packet);
@@ -151,11 +178,17 @@ fn parse_packet(raw_packet: String) -> PacketElement {
 
 
 fn process_lines(lines: &Vec<String>) -> i32 {
+    /*
+    This takes a list of packets which are lists holding any mixture of lists and integers (e.g., [], [[]], [2, [3,[4]]], etc). It then looks at pairs of packets, determining if they are in the right order or not based on multiple rules. The return value is the sum of the indices of all matching pairs, where the first two packets are index 1, the 3rd and 4th packets make up the pair at index 2, etc.
+
+    See Part 1 of https://adventofcode.com/2022/day/13
+    */
     let mut pair_index: i32 = 0;
     let mut pair_indices_sum: i32 = 0;
 
+    // check each pair of packets to determine if they're in the right order
     for packet_pair in lines.chunks(2) {
-        pair_index += 1;
+        pair_index += 1; // we're counting from 1
         //println!("{}",packet_pair[0]);
         //println!("{}",packet_pair[1]);
 
@@ -172,6 +205,11 @@ fn process_lines(lines: &Vec<String>) -> i32 {
 }
 
 fn process_lines2(lines: &Vec<String>) -> i32 {
+    /*
+    Building on the logic of process_lines(), now we add two divider packets ([[2]] and [[6]]) to the end of the list of packets, then sort them using the rules from Part 1. The return value is the index (counting from 1) of divider packet [[2]] times the index of divider packet [[6]].
+
+    See Part 2 of https://adventofcode.com/2022/day/13
+    */
     let mut packet_vec: Vec<PacketElement>;
     let mut swapped: bool;
 
