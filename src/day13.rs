@@ -144,7 +144,6 @@ fn parse_packet(raw_packet: String) -> PacketElement {
     if right_index > left_index {
         //println!("Catching single-entry in {}[{}..{}]", raw_packet, left_index, right_index);
         elements.push(parse_packet((raw_packet.as_str()[left_index..right_index]).to_string()));
-        left_index = right_index + 1;
     }
     let my_packet = PacketElement::List(elements);
     my_packet
@@ -172,6 +171,57 @@ fn process_lines(lines: &Vec<String>) -> i32 {
     pair_indices_sum
 }
 
+fn process_lines2(lines: &Vec<String>) -> i32 {
+    let mut packet_vec: Vec<PacketElement>;
+    let mut swapped: bool;
+
+    // parse all the packets
+    packet_vec = lines.into_iter().map(|x| parse_packet(x.clone())).collect();
+
+    // put the divider packets in
+    packet_vec.push(parse_packet("[[2]]".to_string()));
+    packet_vec.push(parse_packet("[[6]]".to_string()));
+
+    // bubble sort them
+    loop {
+        swapped = false;
+        for index in 0..lines.len() {
+            if recursive_compare(packet_vec[index].clone(), packet_vec[index+1].clone()) == -1 {
+                // swap index and index + 1
+                let temp: PacketElement = packet_vec[index].clone();
+                packet_vec[index] = packet_vec[index+1].clone();
+                packet_vec[index+1] = temp.clone();
+                swapped = true;
+                break;
+            }
+        }
+        if !swapped {
+            break;
+        }
+    }
+
+    // get the indices of [[2]] and [[6]]
+    let index_2: usize = packet_vec.iter().position(|x| print_packet_element(x.clone()) == "[[2]]").unwrap() + 1;
+    let index_6: usize = packet_vec.iter().position(|x| print_packet_element(x.clone()) == "[[6]]").unwrap() + 1;
+
+    println!("Found [[2]] at index {}", index_2);
+    println!("Found [[6]] at index {}", index_6);
+    /*
+    for index in 0..packet_vec.len() {
+        if print_packet_element(packet_vec[index].clone()) == "[[2]]" {
+            index_2 = index + 1;
+            println!("Found [[2]] at index {}", index_2);
+        }
+        if print_packet_element(packet_vec[index].clone()) == "[[6]]" {
+            index_6 = index + 1;
+            println!("Found [[6]] at index {}", index_6);
+        }
+    }
+    */
+
+    (index_2 * index_6) as i32
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -186,6 +236,18 @@ mod tests {
     fn test_process_lines_full() {
         let lines = read_lines("day13_input.txt");
         assert_eq!(process_lines(&lines), 5557);
+    }
+
+    #[test]
+    fn test_process_lines2_short() {
+        let lines = read_lines("day13_input_short.txt");
+        assert_eq!(process_lines2(&lines), 140);
+    }
+
+    #[test]
+    fn test_process_lines2_full() {
+        let lines = read_lines("day13_input.txt");
+        assert_eq!(process_lines2(&lines), 22425);
     }
 
     #[test]
@@ -311,4 +373,5 @@ pub fn main() {
     let result = read_lines("day13_input_short.txt");
     println!("Day 13:");
     println!("Part 1 - The sum of the indices of the pairs in the right order is: {}", process_lines(&result));
+    println!("Part 2 - The decoder key is: {}", process_lines2(&result));
 }

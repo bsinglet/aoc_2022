@@ -89,11 +89,13 @@ def get_decoder_key(packets: list) -> int:
     #    print(each)
 
     # multiply the indices of the two divider packets
+    print(f"Found [[2]] at {packets.index([[2]]) + 1}")
+    print(f"Found [[6]] at {packets.index([[6]]) + 1}")
     return (packets.index([[2]]) + 1) * (packets.index([[6]]) + 1)
 
 
 def main():
-    packets = parse_input('day13_input.txt')
+    packets = parse_input('day13_input_short.txt')
     packets_sum = sum_ordered_packets(packets)
     print(f"The sum of correctly ordered packet indices is {packets_sum}")
     print(f"The decoder key is {get_decoder_key(packets)}")
