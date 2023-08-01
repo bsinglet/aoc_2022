@@ -9,6 +9,32 @@ enum CaveEnum {
     Sand,
 }
 
+fn cave_hashmap_to_string(hashmap: &HashMap<(usize, usize), CaveEnum>) -> String {
+    let mut result: String = "".to_string();
+    let mut point_map: Vec<String> = vec![];
+    for y in 0..10 {
+        let mut line: String = "".to_string();
+        for x in 494..504 {
+            let c: char = match hashmap.get(&(x, y)) {
+                Some(x) => {
+                    match x {
+                        CaveEnum::Rock => '#',
+                        CaveEnum::Sand => 'o',
+                    }
+                },
+                None => '.',
+            };
+            line.push(c);
+        }
+        line.push('\n');
+        point_map.push(line);
+    }
+    for each in point_map {
+        result = result + &each;
+    }
+    result
+}
+
 fn read_lines(filename: &str) -> Vec<String> {
     /*
     Open a text file and return a Vector of Strings representing the individual
@@ -62,7 +88,7 @@ fn draw_lines(line: String, hashmap: HashMap<(usize, usize), CaveEnum>) -> HashM
         }else {
             if start.0 < end.0 {
                 direction = Direction::Right;
-            }else if start.1 > end.1 {
+            }else if start.0 > end.0 {
                 direction = Direction::Right;
                 let temp: (i32, i32);
                 temp = start;
@@ -73,13 +99,13 @@ fn draw_lines(line: String, hashmap: HashMap<(usize, usize), CaveEnum>) -> HashM
         match direction {
             Direction::Down => {
                 for y in start.1..end.1+1 {
-                    println!("Adding point ({}, {})", start.0, y);
+                    //println!("Adding point ({}, {})", start.0, y);
                     result_hashmap.insert((start.0 as usize, y as usize), CaveEnum::Rock);
                 }
             },
             Direction::Right => {
                 for x in start.0..end.0+1 {
-                    println!("Adding point ({}, {})", x, start.1);
+                    //println!("Adding point ({}, {})", x, start.1);
                     result_hashmap.insert((x as usize, start.1 as usize), CaveEnum::Rock);
                 }
             },
@@ -126,10 +152,13 @@ fn process_lines(lines: &Vec<String>) -> i32 {
         // each new grain of sand starts at (500, 0)
         let mut found_rest: bool = false;
         falling_sand = (500, 0);
+        println!("Dropping {}th grain of sand", units_sand_rested);
+        println!("{}", cave_hashmap_to_string(&hashmap));
     
         while !found_rest {
             // see if the sand falls into the abyss
             let (next_point, found) = next_point_below(falling_sand, &hashmap);
+            println!("Next spot to land on ({},{})", next_point.0, next_point.1);
             if !found {
                 abyss_reached = true;
                 break;
@@ -152,6 +181,9 @@ fn process_lines(lines: &Vec<String>) -> i32 {
                 // came to rest
                 found_rest = true;
                 units_sand_rested += 1;
+                if units_sand_rested > 10 {
+                    abyss_reached = true;
+                }
             }
         }
         // register the new grain of sand
@@ -168,7 +200,7 @@ mod tests {
     #[test]
     fn test_process_lines_short() {
         let lines = read_lines("day14_input_short.txt");
-        assert_eq!(process_lines(&lines), -1);
+        assert_eq!(process_lines(&lines), 24);
     }
 
     /*
@@ -178,6 +210,33 @@ mod tests {
         assert_eq!(process_lines(&lines), -1);
     }
     */
+
+    #[test]
+    fn test_process_lines_01() {
+        let lines = vec!["510,10 -> 520,10".to_string()];
+        assert_eq!(process_lines(&lines), 0);
+    }
+
+    #[test]
+    fn test_process_lines_02() {
+        let lines = vec!["499,10 -> 501,10".to_string()];
+        assert_eq!(process_lines(&lines), 1);
+    }
+
+    #[test]
+    fn test_process_lines_03() {
+        let lines = vec!["499,9 -> 499,10".to_string(),
+                                      "499,10 -> 500,10".to_string()];
+        assert_eq!(process_lines(&lines), 0);
+    }
+
+    #[test]
+    fn test_process_lines_04() {
+        let lines = vec!["499,9 -> 499,10".to_string(),
+                                      "499,10 -> 501,10".to_string()];
+        assert_eq!(process_lines(&lines), 1);
+    }
+
 
     #[test]
     fn test_parse_point_01() {
@@ -211,6 +270,15 @@ mod tests {
         assert_eq!(hashmap.len(), 5);
         let cell_value: CaveEnum = *hashmap.get(&(497,6)).unwrap();
         assert_eq!(cell_value, *Some(&CaveEnum::Rock).unwrap());
+    }
+
+    #[test]
+    fn test_next_point_below_01() {
+        let mut hashmap: HashMap<(usize, usize), CaveEnum> = HashMap::<(usize, usize), CaveEnum>::new();
+        hashmap = draw_lines("500,10 -> 509,10".to_string(), hashmap);
+        let (destination, found) = next_point_below((500,0), &hashmap);
+        assert!(found);
+        assert_eq!(destination, (500,10));
     }
 }
 
