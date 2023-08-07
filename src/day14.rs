@@ -16,7 +16,7 @@ fn _cave_hashmap_to_string(hashmap: &HashMap<(usize, usize), CaveEnum>) -> Strin
     let mut point_map: Vec<String> = vec![];
     for y in 0..12 {
         let mut line: String = "".to_string();
-        for x in 494..504 {
+        for x in 486..512 {
             let c: char = match hashmap.get(&(x, y)) {
                 Some(x) => {
                     match x {
@@ -135,6 +135,18 @@ fn next_point_below(falling_sand: (usize, usize), hashmap: &HashMap<(usize, usiz
     (highest_point, found)
 }
 
+fn get_maximum_height(hashmap: &HashMap<(usize, usize), CaveEnum>) -> usize {
+    let mut heighest_point: (usize, usize) = *hashmap.keys().last().unwrap();
+
+    for each_point in hashmap.keys() {
+        if each_point.1 > heighest_point.1 {
+            heighest_point = (each_point.0, each_point.1);
+        }
+    }
+
+    heighest_point.1
+}
+
 fn process_lines(lines: &Vec<String>) -> i32 {
     /*
 
@@ -200,6 +212,88 @@ fn process_lines(lines: &Vec<String>) -> i32 {
     units_sand_rested
 }
 
+fn process_lines2(lines: &Vec<String>) -> i32 {
+    /*
+    The same as process_lines(), except now we're assuming there's a floor 
+    infinitely long, two units below the lowest point in the input. Because y=0
+    is the top of the cave, that means the floor is max(y)+2.
+
+    The return value is the number of units of sand that come to rest until one 
+    rests (500, 0), blocking the cave.
+
+    See Part 2 of https://adventofcode.com/2022/day/14
+    */
+    let mut hashmap: HashMap<(usize, usize), CaveEnum> = HashMap::<(usize, usize), CaveEnum>::new();
+    let mut units_sand_rested: i32 = 0;
+    let mut falling_sand: (usize, usize);
+    let mut ceiling_blocked: bool = false;
+    let floor_height: usize;
+    
+    // parse the input lines to find the walls of the cave
+    for each_line in lines {
+        hashmap = draw_lines(each_line.clone(), hashmap);
+    }
+
+    floor_height = get_maximum_height(&hashmap) + 2;
+
+    // simulate sand falling until one lands in the abyss
+    while !ceiling_blocked {
+        // each new grain of sand starts at (500, 0)
+        let mut found_rest: bool = false;
+        falling_sand = (500, 0);
+        println!("Dropping {}th grain of sand", units_sand_rested);
+        println!("{}", _cave_hashmap_to_string(&hashmap));
+        //println!("Total solid particles on on map {}", hashmap.len());
+    
+        while !found_rest {
+            // see if the sand falls into the abyss
+            let (next_point, found) = next_point_below(falling_sand, &hashmap);
+            println!("Next spot to land on ({},{})", next_point.0, next_point.1);
+            if !found {
+                falling_sand.1 = floor_height - 1;
+                found_rest = true;
+                break;
+            }
+            if next_point == (500, 0) && hashmap.contains_key(&(500, 1)) {
+                ceiling_blocked = true;
+                break;
+            }
+
+            // the sand lands on top of the next point found
+            falling_sand.0 = next_point.0;
+            falling_sand.1 = next_point.1 - 1;
+
+            // look for an opening to the lower left or lower right
+            if !hashmap.contains_key(&(falling_sand.0 - 1, falling_sand.1 + 1)) {
+                falling_sand.0 -= 1;
+                falling_sand.1 += 1;
+                //println!("Grain of sand slid down-left to ({}, {})", falling_sand.0, falling_sand.1);
+            }else if !hashmap.contains_key(&(falling_sand.0 + 1, falling_sand.1 + 1)) {
+                falling_sand.0 += 1;
+                falling_sand.1 += 1;
+                //println!("Grain of sand slid down-right to ({}, {})", falling_sand.0, falling_sand.1);
+            }else {
+                // came to rest
+                found_rest = true;
+                units_sand_rested += 1;
+            }
+            if units_sand_rested > 79 {
+                ceiling_blocked = true;
+                println!("Units sand rested is {}, but sand particles is {}", units_sand_rested,
+                hashmap.values().filter(|&x| x == &CaveEnum::Sand).collect::<Vec<&CaveEnum>>().len());
+                todo!("Crutch to kill infinite loop.");
+            }
+        }
+        // register the new grain of sand
+        if !ceiling_blocked {
+            //println!("Grain of sand rested at ({}, {})", falling_sand.0, falling_sand.1);
+            hashmap.insert(falling_sand, CaveEnum::Sand);
+        }
+    }
+
+    units_sand_rested
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -214,6 +308,18 @@ mod tests {
     fn test_process_lines_full() {
         let lines = read_lines("day14_input.txt");
         assert_eq!(process_lines(&lines), 1078);
+    }
+
+    #[test]
+    fn test_process_lines2_short() {
+        let lines = read_lines("day14_input_short.txt");
+        assert_eq!(process_lines(&lines), 93);
+    }
+
+    #[test]
+    fn test_process_lines2_full() {
+        let lines = read_lines("day14_input.txt");
+        assert_eq!(process_lines2(&lines), -1);
     }
 
     #[test]
@@ -242,6 +348,33 @@ mod tests {
         assert_eq!(process_lines(&lines), 1);
     }
 
+    #[test]
+    fn test_process_lines2_01() {
+        let lines = vec!["500,0 -> 500,0".to_string()];
+        assert_eq!(process_lines2(&lines), 0);
+    }
+
+    #[test]
+    fn test_process_lines2_02() {
+        let lines = vec!["500,1 -> 500,1".to_string(),
+                                      "499,0 -> 499,1".to_string(),
+                                      "501,0 -> 501,1".to_string()];
+        assert_eq!(process_lines2(&lines), 1);
+    }
+
+    #[test]
+    fn test_process_lines2_03() {
+        let lines = vec!["500,2 -> 500,2".to_string(),
+                                      "499,0 -> 499,2".to_string(),
+                                      "501,0 -> 501,2".to_string()];
+        assert_eq!(process_lines2(&lines), 2);
+    }
+
+    #[test]
+    fn test_process_lines2_04() {
+        let lines = vec!["500,1 -> 500,1".to_string()];
+        assert_eq!(process_lines2(&lines), 8);
+    }
 
     #[test]
     fn test_parse_point_01() {
@@ -291,4 +424,5 @@ pub fn main() {
     let result = read_lines("day14_input_short.txt");
     println!("Day 14:");
     println!("Part 1 - A total of {} units of sand come to rest before sand starts flowing into the abyss below.", process_lines(&result));
+    println!("Part 2 - A total of {} units of sand come to rest before the source of the sand becomes blocked", process_lines2(&result));
 }
