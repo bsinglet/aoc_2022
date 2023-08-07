@@ -1,7 +1,7 @@
 use std::fs;
 use std::str::FromStr;
 use regex::Regex;
-use std::collections::{HashMap};
+use std::collections::HashMap;
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 enum CaveEnum {
@@ -9,7 +9,7 @@ enum CaveEnum {
     Sand,
 }
 
-fn cave_hashmap_to_string(hashmap: &HashMap<(usize, usize), CaveEnum>) -> String {
+fn _cave_hashmap_to_string(hashmap: &HashMap<(usize, usize), CaveEnum>) -> String {
     let mut result: String = "".to_string();
     let mut point_map: Vec<String> = vec![];
     for y in 0..10 {
@@ -152,13 +152,14 @@ fn process_lines(lines: &Vec<String>) -> i32 {
         // each new grain of sand starts at (500, 0)
         let mut found_rest: bool = false;
         falling_sand = (500, 0);
-        println!("Dropping {}th grain of sand", units_sand_rested);
-        println!("{}", cave_hashmap_to_string(&hashmap));
+        //println!("Dropping {}th grain of sand", units_sand_rested);
+        //println!("{}", cave_hashmap_to_string(&hashmap));
+        //println!("Total grains of sand on map {}", hashmap.len());
     
         while !found_rest {
             // see if the sand falls into the abyss
             let (next_point, found) = next_point_below(falling_sand, &hashmap);
-            println!("Next spot to land on ({},{})", next_point.0, next_point.1);
+            //println!("Next spot to land on ({},{})", next_point.0, next_point.1);
             if !found {
                 abyss_reached = true;
                 break;
