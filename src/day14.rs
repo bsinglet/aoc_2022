@@ -1,5 +1,7 @@
 use std::fs;
 use std::str::FromStr;
+use std::mem::swap;
+use std::cmp::Ordering;
 use regex::Regex;
 use std::collections::HashMap;
 
@@ -43,7 +45,7 @@ fn read_lines(filename: &str) -> Vec<String> {
     let contents = fs::read_to_string(filename)
         .expect("Something went wrong reading the file.");
     let mut lines: Vec<String> = Vec::new();
-    for each in contents.split_terminator("\n").filter(|x| x.len() > 0).collect::<Vec<&str>>() {
+    for each in contents.split_terminator('\n').filter(|x| x.is_empty()).collect::<Vec<&str>>() {
         lines.push(each.trim().to_string());
     }
     lines
@@ -51,7 +53,7 @@ fn read_lines(filename: &str) -> Vec<String> {
 
 fn parse_point(point: String) -> (i32, i32) {
     let point_regex = Regex::new(r"^(\d+),(\d+)$").unwrap();
-    let point_captures = point_regex.captures(&point.as_str()).unwrap();
+    let point_captures = point_regex.captures(point.as_str()).unwrap();
     (i32::from_str(point_captures.get(1).unwrap().as_str()).unwrap(), 
     i32::from_str(point_captures.get(2).unwrap().as_str()).unwrap())
 }
@@ -77,23 +79,26 @@ fn draw_lines(line: String, hashmap: HashMap<(usize, usize), CaveEnum>) -> HashM
         let mut start: (i32, i32) = parse_point(points[index].clone());
         let mut end: (i32, i32) = parse_point(points[index+1].clone());
         let mut direction: Direction = Direction::Down;
-        if start.1 < end.1 {
-            direction = Direction::Down;
-        }else if start.1 > end.1 {
-            direction = Direction::Down;
-            let temp: (i32, i32);
-            temp = start;
-            start = end;
-            end = temp;
-        }else {
-            if start.0 < end.0 {
-                direction = Direction::Right;
-            }else if start.0 > end.0 {
-                direction = Direction::Right;
-                let temp: (i32, i32);
-                temp = start;
-                start = end;
-                end = temp;
+        match start.1.cmp(&end.1) {
+            Ordering::Less => {
+                
+            },
+            Ordering::Greater => {
+                swap(&mut start, &mut end);
+            },
+            Ordering::Equal => {
+                match start.0.cmp(&end.0) {
+                    Ordering::Less => {
+                        direction = Direction::Right;
+                    },
+                    Ordering::Greater => {
+                        direction = Direction::Right;
+                        swap(&mut start, &mut end);
+                    },
+                    Ordering::Equal => {
+                        continue;
+                    }
+                }
             }
         }
         match direction {
@@ -173,18 +178,18 @@ fn process_lines(lines: &Vec<String>) -> i32 {
 
             // look for an opening to the lower left or lower right
             if !hashmap.contains_key(&(falling_sand.0 - 1, falling_sand.1 + 1)) {
-                falling_sand.0 = falling_sand.0 - 1;
-                falling_sand.1 = falling_sand.1 + 1;
+                falling_sand.0 -= 1;
+                falling_sand.1 += 1;
             }else if !hashmap.contains_key(&(falling_sand.0 + 1, falling_sand.1 + 1)) {
-                falling_sand.0 = falling_sand.0 + 1;
-                falling_sand.1 = falling_sand.1 + 1;
+                falling_sand.0 += 1;
+                falling_sand.1 += 1;
             }else {
                 // came to rest
                 found_rest = true;
                 units_sand_rested += 1;
-                if units_sand_rested > 10 {
+                /*if units_sand_rested > 10 {
                     abyss_reached = true;
-                }
+                }*/
             }
         }
         // register the new grain of sand
