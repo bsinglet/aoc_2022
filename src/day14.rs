@@ -14,7 +14,7 @@ enum CaveEnum {
 fn _cave_hashmap_to_string(hashmap: &HashMap<(usize, usize), CaveEnum>) -> String {
     let mut result: String = "".to_string();
     let mut point_map: Vec<String> = vec![];
-    for y in 0..10 {
+    for y in 0..12 {
         let mut line: String = "".to_string();
         for x in 494..504 {
             let c: char = match hashmap.get(&(x, y)) {
@@ -45,7 +45,7 @@ fn read_lines(filename: &str) -> Vec<String> {
     let contents = fs::read_to_string(filename)
         .expect("Something went wrong reading the file.");
     let mut lines: Vec<String> = Vec::new();
-    for each in contents.split_terminator('\n').filter(|x| x.is_empty()).collect::<Vec<&str>>() {
+    for each in contents.split_terminator('\n').filter(|x| !x.is_empty()).collect::<Vec<&str>>() {
         lines.push(each.trim().to_string());
     }
     lines
@@ -125,9 +125,7 @@ fn next_point_below(falling_sand: (usize, usize), hashmap: &HashMap<(usize, usiz
 
     for each_point in hashmap.keys() {
         if each_point.0 == falling_sand.0 && each_point.1 > falling_sand.1 {
-            if found && highest_point.1 > each_point.1 {
-                highest_point.1 = each_point.1;
-            } else {
+            if !found || each_point.1 < highest_point.1 {
                 highest_point.0 = each_point.0;
                 highest_point.1 = each_point.1;
                 found = true;
@@ -158,8 +156,8 @@ fn process_lines(lines: &Vec<String>) -> i32 {
         let mut found_rest: bool = false;
         falling_sand = (500, 0);
         //println!("Dropping {}th grain of sand", units_sand_rested);
-        //println!("{}", cave_hashmap_to_string(&hashmap));
-        //println!("Total grains of sand on map {}", hashmap.len());
+        //println!("{}", _cave_hashmap_to_string(&hashmap));
+        //println!("Total solid particles on on map {}", hashmap.len());
     
         while !found_rest {
             // see if the sand falls into the abyss
@@ -173,27 +171,30 @@ fn process_lines(lines: &Vec<String>) -> i32 {
                 panic!("Sand backed up to the top, which shouldn't be possible.");
             }
 
-            // the sand lands on top of the next point found 
+            // the sand lands on top of the next point found
+            falling_sand.0 = next_point.0; 
             falling_sand.1 = next_point.1 - 1;
 
             // look for an opening to the lower left or lower right
             if !hashmap.contains_key(&(falling_sand.0 - 1, falling_sand.1 + 1)) {
                 falling_sand.0 -= 1;
                 falling_sand.1 += 1;
+                //println!("Grain of sand slid down-left to ({}, {})", falling_sand.0, falling_sand.1);
             }else if !hashmap.contains_key(&(falling_sand.0 + 1, falling_sand.1 + 1)) {
                 falling_sand.0 += 1;
                 falling_sand.1 += 1;
+                //println!("Grain of sand slid down-right to ({}, {})", falling_sand.0, falling_sand.1);
             }else {
                 // came to rest
                 found_rest = true;
                 units_sand_rested += 1;
-                /*if units_sand_rested > 10 {
-                    abyss_reached = true;
-                }*/
             }
         }
         // register the new grain of sand
-        hashmap.insert(falling_sand, CaveEnum::Sand);
+        if !abyss_reached {
+            //println!("Grain of sand rested at ({}, {})", falling_sand.0, falling_sand.1);
+            hashmap.insert(falling_sand, CaveEnum::Sand);
+        }
     }
 
     units_sand_rested
@@ -209,13 +210,11 @@ mod tests {
         assert_eq!(process_lines(&lines), 24);
     }
 
-    /*
     #[test]
     fn test_process_lines_full() {
         let lines = read_lines("day14_input.txt");
-        assert_eq!(process_lines(&lines), -1);
+        assert_eq!(process_lines(&lines), 1078);
     }
-    */
 
     #[test]
     fn test_process_lines_01() {
